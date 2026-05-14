@@ -1,0 +1,16 @@
+# Soroptimist International of Poway — Infographic Data
+# _data/sip_infograph.yml
+
+Title: "Soroptimist International of Poway"
+HeaderImage: "sip/sip_header.png"
+
+Links:
+  - label: "Live site"
+    url: "https://sip.opencodingsociety.com/"
+    icon: "globe"
+  - label: "What you see (pages)"
+    url: "https://github.com/cspcodewarriors/codewarrior-pages"
+    icon: "pages"
+  - label: "What runs behind it (server)"
+    url: "https://github.com/cspcodewarriors/codewarriorflask"
+    icon: "server"

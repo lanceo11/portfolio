@@ -2,7 +2,7 @@
 layout: post
 title: Readme
 toc: true
-menu: nav/home.html
+permalink: /readme
 ---
 
 {% include_relative README.md %}

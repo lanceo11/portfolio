@@ -1,4 +1,4 @@
-OST ?= localhost
+HOST ?= localhost
 PORT ?= 4500
 LOG_FILE = /tmp/jekyll$(PORT).log
 PYTHON := venv/bin/python3

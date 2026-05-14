@@ -2,7 +2,7 @@
 layout: opencs
 title: Logout
 permalink: /logout
-search_exclude: True
+search_exclude: true
 ---
 
 <script type="module">

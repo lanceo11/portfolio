@@ -8,3 +8,13 @@
 @import "open-coding/main";
 @import "lessonbase";
 @import "footer";
+
+// Capstone Infograph Styles (centralized)
+// All individual capstone infograph SCSS has been unified into one file to provide a consistent B/W theme.
+@import "capstone/infograph";
+
+// RPN Calculator Lesson Interactives
+@import "nighthawk/rpn-interactive";
+
+// FRQ Interactive Lesson Styles (popcorn hacks, drag-drop, visualizer, quiz, game)
+@import "nighthawk/frq-interactive";

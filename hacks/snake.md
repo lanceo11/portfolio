@@ -1,7 +1,7 @@
 ---
 layout: opencs
 title: Snake Game
-permalink: /snake/
+permalink: /snake
 ---
 
 <style>
@@ -71,7 +71,6 @@ permalink: /snake/
 <h2>Snake</h2>
 <div class="container">
     <p class="fs-4">Score: <span id="score_value">0</span></p>
-
     <div class="container bg-secondary" style="text-align:center;">
         <!-- Main Menu -->
         <div id="menu" class="py-4 text-light">
