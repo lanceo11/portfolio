@@ -63,7 +63,7 @@ exclude:
 incremental: true
 encoding: utf-8
 
-remote_theme: jekyll/minima@d4d779a
+remote_theme: jekyll/minima
 plugins:
   - jekyll-remote-theme
   - jekyll-include-cache
