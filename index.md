@@ -33,8 +33,8 @@ Hi! I'm Lance Oberiano, and this portfolio highlights the games, lessons, and in
       <a href="{{site.baseurl}}/index3" style="text-decoration: none; display: inline-block; background: #27496d; color: white; padding: 10px 20px; border-radius: 6px; font-weight: 700; text-align: center;">
         Interactive Navigation
       </a>
-      <a href="{{site.baseurl}}/basketball-concepts" style="text-decoration: none; display: inline-block; background: #875428; color: white; padding: 10px 20px; border-radius: 6px; font-weight: 700; text-align: center;">
-        Basketball Concepts
+      <a href="{{site.baseurl}}/basketball-cs111-breakdown" style="text-decoration: none; display: inline-block; background: #875428; color: white; padding: 10px 20px; border-radius: 6px; font-weight: 700; text-align: center;">
+        Basketball CS 111 Breakdown
       </a>
     </div>
   </div>

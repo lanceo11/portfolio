@@ -1158,7 +1158,7 @@ Check if this is a course lesson and determine which course context to use
 
   <div class="post-content e-content" itemprop="articleBody">
     {%- if page.toc -%}
-    {% include toc.html html=content %}
+    {% include toc.html html=content id="page-toc" class="page-toc" anchor_class="page-toc__link" %}
     {%- endif -%}
 
     {%- if page.submenu -%}
@@ -1478,6 +1478,51 @@ Check if this is a course lesson and determine which course context to use
   <script src="{{ site.baseurl }}/assets/js/code-runner-analytics.js"></script>
   <script src="{{ site.baseurl }}/assets/js/lesson-completion.js"></script>
   <script src="{{ site.baseurl }}/assets/js/lesson-completion-bigsix.js"></script>
+  {%- if page.toc_history -%}
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const toc = document.getElementById('page-toc');
+      if (!toc) return;
+
+      const tocLinks = toc.querySelectorAll('a[href*="#"]');
+
+      const scrollToTarget = (hash) => {
+        if (!hash) return;
+
+        const target = document.getElementById(hash.replace(/^#/, ''));
+        if (!target) return;
+
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      };
+
+      const scrollToToc = () => {
+        toc.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      };
+
+      tocLinks.forEach((link) => {
+        link.addEventListener('click', (event) => {
+          const url = new URL(link.href, window.location.origin);
+          const hash = url.hash;
+
+          if (!hash) return;
+
+          event.preventDefault();
+          history.pushState({ tocSection: hash }, '', hash);
+          scrollToTarget(hash);
+        });
+      });
+
+      window.addEventListener('popstate', () => {
+        if (window.location.hash) {
+          scrollToTarget(window.location.hash);
+          return;
+        }
+
+        scrollToToc();
+      });
+    });
+  </script>
+  {%- endif -%}
 </article>
 
 {% endif %}

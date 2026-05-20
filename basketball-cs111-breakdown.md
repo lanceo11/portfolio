@@ -1,12 +1,35 @@
 ---
 layout: post
 title: GameLevelBasketball CS 111 Breakdown
-description: In-depth, non-table breakdown of how GameLevelBasketball demonstrates CS 111 and CSSE concepts with runnable GameRunners.
+description: In-depth, non-table breakdown of how GameLevelBasketball demonstrates CS 111 and CSSE concepts with a runnable GameRunner.
 permalink: /basketball-cs111-breakdown
 hide: true
 toc: true
+toc_history: true
 codemirror: true
 ---
+
+**Designated GameRunner**
+
+{% capture basketball_runner_challenge %}
+Run the Basketball level here while reading the breakdown below. Move with WASD, press E to shoot, and use this one runner as your live example for the full lesson.
+{% endcapture %}
+
+{% capture basketball_runner_code %}
+import GameControl from '{{site.baseurl}}/assets/js/GameEnginev1.1/essentials/GameControl.js';
+import GameLevelBasketball from '{{site.baseurl}}/assets/js/projects/kirby-minigames/levels/GameLevelBasketball.js';
+
+export const gameLevelClasses = [GameLevelBasketball];
+export { GameControl };
+{% endcapture %}
+
+{% include runners/game.html
+   runner_id="basketball-main-runner"
+   challenge=basketball_runner_challenge
+   code=basketball_runner_code
+   height="430px"
+   editor_height="260px"
+%}
 
 ## Overview
 
@@ -45,28 +68,6 @@ clearProjectiles() { ... }
 ```
 
 Each method has one clear job, which makes the level easier to debug, explain, and revise.
-
-### GameRunner: Software Engineering Structure
-
-{% capture structure_challenge %}
-Run the real Basketball level and focus on how the level is organized into setup, update, reset, and cleanup systems. Move with WASD, press E to shoot, and let Kirby catch you to observe the reset flow.
-{% endcapture %}
-
-{% capture structure_code %}
-import GameControl from '{{site.baseurl}}/assets/js/GameEnginev1.1/essentials/GameControl.js';
-import GameLevelBasketball from '{{site.baseurl}}/assets/js/projects/kirby-minigames/levels/GameLevelBasketball.js';
-
-export const gameLevelClasses = [GameLevelBasketball];
-export { GameControl };
-{% endcapture %}
-
-{% include runners/game.html
-   runner_id="basketball-structure-runner"
-   challenge=structure_challenge
-   code=structure_code
-   height="430px"
-   editor_height="260px"
-%}
 
 ## Object-Oriented Programming and Classes
 
@@ -142,28 +143,6 @@ That gives you a clear hierarchy:
 
 So even though `GameLevelBasketball` is not itself an `extends` class, it demonstrates OOP by composing and configuring objects from an inheritance-based engine.
 
-### GameRunner: OOP and Instantiation
-
-{% capture oop_challenge %}
-Run the Basketball level and inspect how the background, player, NPC chaser, coins, and barriers are all instantiated through the level's class configuration.
-{% endcapture %}
-
-{% capture oop_code %}
-import GameControl from '{{site.baseurl}}/assets/js/GameEnginev1.1/essentials/GameControl.js';
-import GameLevelBasketball from '{{site.baseurl}}/assets/js/projects/kirby-minigames/levels/GameLevelBasketball.js';
-
-export const gameLevelClasses = [GameLevelBasketball];
-export { GameControl };
-{% endcapture %}
-
-{% include runners/game.html
-   runner_id="basketball-oop-runner"
-   challenge=oop_challenge
-   code=oop_code
-   height="430px"
-   editor_height="260px"
-%}
-
 ## Data Types and Object Literals
 
 This level uses all the core data types required by the rubric.
@@ -218,28 +197,6 @@ const coin_1 = {
 
 This is also evidence of data-driven design. Instead of making separate custom classes for every coin and barrier, the level feeds object data into reusable engine classes.
 
-### GameRunner: Data Types and Objects
-
-{% capture data_challenge %}
-Run the Basketball level and focus on the data that drives the game: numeric positions and timers, boolean state flags, arrays of objects, and object literal configuration for the court, player, coins, and barriers.
-{% endcapture %}
-
-{% capture data_code %}
-import GameControl from '{{site.baseurl}}/assets/js/GameEnginev1.1/essentials/GameControl.js';
-import GameLevelBasketball from '{{site.baseurl}}/assets/js/projects/kirby-minigames/levels/GameLevelBasketball.js';
-
-export const gameLevelClasses = [GameLevelBasketball];
-export { GameControl };
-{% endcapture %}
-
-{% include runners/game.html
-   runner_id="basketball-data-runner"
-   challenge=data_challenge
-   code=data_code
-   height="430px"
-   editor_height="260px"
-%}
-
 ## Operators and Mathematical Reasoning
 
 The chase system is one of the best places to show operators. The code uses subtraction to measure distance, `Math.hypot()` to calculate vector length, division to normalize movement, multiplication to scale speed, and `Math.min()` and `Math.max()` to keep values fair and inside the court.
@@ -273,28 +230,6 @@ if (now - this.lastShotAt < this.shootCooldownMs) return;
 ```
 
 This is not just syntax practice. These expressions directly control fairness, pacing, and gameplay rules.
-
-### GameRunner: Operators and Chase Math
-
-{% capture operators_challenge %}
-Run the Basketball level and watch Kirby's chase behavior. Survive longer to see the speed curve increase over time, then use E to test the stun and cooldown logic.
-{% endcapture %}
-
-{% capture operators_code %}
-import GameControl from '{{site.baseurl}}/assets/js/GameEnginev1.1/essentials/GameControl.js';
-import GameLevelBasketball from '{{site.baseurl}}/assets/js/projects/kirby-minigames/levels/GameLevelBasketball.js';
-
-export const gameLevelClasses = [GameLevelBasketball];
-export { GameControl };
-{% endcapture %}
-
-{% include runners/game.html
-   runner_id="basketball-operators-runner"
-   challenge=operators_challenge
-   code=operators_code
-   height="430px"
-   editor_height="260px"
-%}
 
 ## Control Structures and State Management
 
@@ -353,28 +288,6 @@ this.completionTriggered = false;
 
 The state variables are then used to control round flow, pause conditions, completion behavior, and duplicate API prevention.
 
-### GameRunner: Control Structures and State
-
-{% capture control_challenge %}
-Run the Basketball level and observe the state machine in action: intro lock, active survival loop, caught/reset state, projectile cooldown, and win completion after surviving long enough.
-{% endcapture %}
-
-{% capture control_code %}
-import GameControl from '{{site.baseurl}}/assets/js/GameEnginev1.1/essentials/GameControl.js';
-import GameLevelBasketball from '{{site.baseurl}}/assets/js/projects/kirby-minigames/levels/GameLevelBasketball.js';
-
-export const gameLevelClasses = [GameLevelBasketball];
-export { GameControl };
-{% endcapture %}
-
-{% include runners/game.html
-   runner_id="basketball-control-runner"
-   challenge=control_challenge
-   code=control_code
-   height="430px"
-   editor_height="260px"
-%}
-
 ## Input, Output, and Rendering
 
 Keyboard input is handled through event listeners:
@@ -423,28 +336,6 @@ const container = this.gameEnv.container || this.gameEnv.gameContainer;
 ```
 
 So the file is not working in isolation. It reads environment size, stores live stats, and attaches new DOM/canvas elements into the game container.
-
-### GameRunner: Input and Rendering
-
-{% capture io_challenge %}
-Run the Basketball level and test input/output directly. Use WASD to move, E to shoot the basketball canvas projectile, and R after getting caught to test restart input.
-{% endcapture %}
-
-{% capture io_code %}
-import GameControl from '{{site.baseurl}}/assets/js/GameEnginev1.1/essentials/GameControl.js';
-import GameLevelBasketball from '{{site.baseurl}}/assets/js/projects/kirby-minigames/levels/GameLevelBasketball.js';
-
-export const gameLevelClasses = [GameLevelBasketball];
-export { GameControl };
-{% endcapture %}
-
-{% include runners/game.html
-   runner_id="basketball-io-runner"
-   challenge=io_challenge
-   code=io_code
-   height="430px"
-   editor_height="260px"
-%}
 
 ## Collision Detection, Hitboxes, and Gameplay Logic
 
@@ -499,28 +390,6 @@ isCircleHittingObject(projectile, obj) {
 
 This is a very good snippet for a mini-lesson because it proves the game is using more than one collision strategy depending on the shape of the object.
 
-### GameRunner: Collision and Hitboxes
-
-{% capture collision_challenge %}
-Run the Basketball level and test collision logic. Let Kirby touch Astro to trigger a steal, then use E to hit Kirby with a projectile and observe the stun system.
-{% endcapture %}
-
-{% capture collision_code %}
-import GameControl from '{{site.baseurl}}/assets/js/GameEnginev1.1/essentials/GameControl.js';
-import GameLevelBasketball from '{{site.baseurl}}/assets/js/projects/kirby-minigames/levels/GameLevelBasketball.js';
-
-export const gameLevelClasses = [GameLevelBasketball];
-export { GameControl };
-{% endcapture %}
-
-{% include runners/game.html
-   runner_id="basketball-collision-runner"
-   challenge=collision_challenge
-   code=collision_code
-   height="430px"
-   editor_height="260px"
-%}
-
 ## API Integration, Asynchronous I/O, and Persistence
 
 This level also goes beyond local gameplay by saving data and submitting scores.
@@ -574,28 +443,6 @@ if (!this.leaderboard || this.scoreSubmittedThisRound) return;
 
 So this part of the file shows both asynchronous programming and defensive design.
 
-### GameRunner: API and Persistence
-
-{% capture api_challenge %}
-Run the Basketball level and watch the leaderboard widget and stored best-score behavior. After a round ends, inspect localStorage and the Network tab to connect the code to actual browser and API behavior.
-{% endcapture %}
-
-{% capture api_code %}
-import GameControl from '{{site.baseurl}}/assets/js/GameEnginev1.1/essentials/GameControl.js';
-import GameLevelBasketball from '{{site.baseurl}}/assets/js/projects/kirby-minigames/levels/GameLevelBasketball.js';
-
-export const gameLevelClasses = [GameLevelBasketball];
-export { GameControl };
-{% endcapture %}
-
-{% include runners/game.html
-   runner_id="basketball-api-runner"
-   challenge=api_challenge
-   code=api_code
-   height="430px"
-   editor_height="260px"
-%}
-
 ## Documentation, Debugging, and Testing Evidence
 
 This file includes comments that explain why certain logic exists, especially around chase fairness, court boundaries, rendering, and collision alignment.
@@ -639,28 +486,6 @@ For gameplay testing and verification, the level includes:
 - Level completion after surviving long enough
 
 All of that makes the game easy to demo live while also giving strong evidence for code review.
-
-### GameRunner: Debugging and Verification
-
-{% capture debug_challenge %}
-Run the Basketball level as a debugging demo. Open DevTools and inspect the Elements, Console, Application, and Network tabs while you play to connect each CS 111 concept to real runtime evidence.
-{% endcapture %}
-
-{% capture debug_code %}
-import GameControl from '{{site.baseurl}}/assets/js/GameEnginev1.1/essentials/GameControl.js';
-import GameLevelBasketball from '{{site.baseurl}}/assets/js/projects/kirby-minigames/levels/GameLevelBasketball.js';
-
-export const gameLevelClasses = [GameLevelBasketball];
-export { GameControl };
-{% endcapture %}
-
-{% include runners/game.html
-   runner_id="basketball-debug-runner"
-   challenge=debug_challenge
-   code=debug_code
-   height="430px"
-   editor_height="260px"
-%}
 
 ## Final CS 111 Alignment
 
