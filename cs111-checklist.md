@@ -13,41 +13,41 @@ This chart focuses on how `GameLevelBasketball.js` demonstrates each concept in 
 
 | Concept | How I completed it in `GameLevelBasketball` | Complete |
 |---|---|---|
-| Writing Classes | I created the custom `GameLevelBasketball` class to control the full basketball minigame. | `✓` |
-| Methods & Parameters | I used methods like `updateProjectiles(now, lebron)`, `spawnProjectileFromPlayer(player, now)`, and `isHitboxCollision(a, b)`. | `✓` |
-| Instantiation & Objects | I instantiate the level objects through `this.classes` with `GameEnvBackground`, `Player`, `Npc`, `Coin`, and `Barrier`. | `✓` |
-| Inheritance (Basic) | The level uses engine classes that extend the game object hierarchy, including `Player`, `Npc`, `Coin`, and `Barrier`. | `✓` |
-| Method Overriding | The level defines its own lifecycle methods such as `initialize()`, `update()`, and `destroy()` to customize runtime behavior. | `✓` |
-| Constructor Chaining | The basketball level composes engine objects that use constructor chaining internally when created from `this.classes`. | `✓` |
-| Iteration | I loop through projectile arrays in `updateProjectiles()` and through filtered coins in reset/spawn logic. | `✓` |
-| Conditionals | I use `if` conditions for caught state, pregame lock, stun, projectile cooldowns, collision checks, and win conditions. | `✓` |
-| Nested Conditions | The `update()` method layers multiple conditions like timer checks, caught state, stun state, and collision outcomes. | `✓` |
-| Numbers | The code uses positions, cooldowns, speed, survival time, projectile radius, and score math. | `✓` |
-| Strings | The code uses sprite IDs, dialogue text, HUD text, localStorage keys, and direction names. | `✓` |
-| Booleans | State flags include `caught`, `preGameLocked`, `scoreSubmittedThisRound`, `levelCompleted`, and `completionTriggered`. | `✓` |
-| Arrays | Arrays are used for `this.classes`, `this.projectiles`, and filtered collections of coins or game objects. | `✓` |
-| Objects (JSON) | Player, chaser, barrier, and coin setup all use object literals for configuration. | `✓` |
-| Mathematical Operators | The chase system uses subtraction, division, multiplication, and addition with `dx`, `dy`, `dist`, and speed scaling. | `✓` |
-| String Operations | Template literals build HUD text and dynamic CSS positions like `` `${projectile.x - projectile.radius}px` ``. | `✓` |
-| Boolean Expressions | Compound comparisons and `&&` logic are used in hitbox collision and input/state checks. | `✓` |
-| Keyboard Input | `keydown` listeners handle restart with `R` and shooting with `E`. | `✓` |
-| Canvas Rendering | `drawProjectileSprite()` renders the basketball projectile directly on a canvas with arc and curve drawing commands. | `✓` |
-| GameEnv Configuration | The level uses `gameEnv.innerWidth`, `gameEnv.innerHeight`, `gameEnv.path`, `gameEnv.container`, and `gameEnv.stats`. | `✓` |
-| API Integration | The level submits a score through the leaderboard system using `submitScore(...)`. | `✓` |
-| Asynchronous I/O | Score submission is handled as an async promise with `.catch(...)`. | `✓` |
-| JSON Parsing | The level works with structured game config objects and stats objects; API response handling is delegated through the leaderboard module. | `✓` |
-| Code Comments | The file includes explanatory comments around chase behavior, fairness, and hitbox alignment. | `✓` |
-| Mini-Lesson Documentation | I created the Basketball concepts breakdown page and linked it from my portfolio. | `✓` |
-| Code Highlights | The portfolio now includes highlighted snippets and explanations for Basketball logic. | `✓` |
-| Console Debugging | The Kirby project includes strategic logs in the broader lesson flow and can be debugged through stateful methods in this level. | `✓` |
-| Hit Box Visualization | The level uses custom hitbox rectangle logic in `getHitboxRect()` and `isHitboxCollision()` to refine collisions. | `✓` |
-| Source-Level Debugging | The level is broken into named methods, which makes it straightforward to inspect with DevTools breakpoints. | `✓` |
-| Network Debugging | Leaderboard submission can be inspected in the Network tab when scores are posted. | `✓` |
-| Application Debugging | `localStorage` is used for best time and best coins with `loadBestTime()`, `saveBestTime()`, `loadBestCoins()`, and `saveBestCoins()`. | `✓` |
-| Element Inspection | The HUD and projectile canvases are created dynamically in the DOM, making them inspectable in the Elements panel. | `✓` |
-| Gameplay Testing | The level supports repeated playthroughs with reset, caught, and completion flows. | `✓` |
-| Integration Testing | Leaderboard behavior can be tested by playing the level and submitting a score. | `✓` |
-| API Error Handling | `submitRoundScore()` catches failed leaderboard submissions with `.catch((err) => console.warn(...))`. | `✓` |
+| [Writing Classes](/basketball-cs111-breakdown#writing-classes) | I created the custom `GameLevelBasketball` class to control the full basketball minigame. | `✓` |
+| [Methods & Parameters](/basketball-cs111-breakdown#methods-and-parameters) | I used methods like `updateProjectiles(now, lebron)`, `spawnProjectileFromPlayer(player, now)`, and `isHitboxCollision(a, b)`. | `✓` |
+| [Instantiation & Objects](/basketball-cs111-breakdown#instantiation-and-objects) | I instantiate the level objects through `this.classes` with `GameEnvBackground`, `Player`, `Npc`, `Coin`, and `Barrier`. | `✓` |
+| [Inheritance (Basic)](/basketball-cs111-breakdown#inheritance-basic) | The level uses engine classes that extend the game object hierarchy, including `Player`, `Npc`, `Coin`, and `Barrier`. | `✓` |
+| [Method Overriding](/basketball-cs111-breakdown#method-overriding) | The level defines its own lifecycle methods such as `initialize()`, `update()`, and `destroy()` to customize runtime behavior. | `✓` |
+| [Constructor Chaining](/basketball-cs111-breakdown#constructor-chaining) | The basketball level composes engine objects that use constructor chaining internally when created from `this.classes`. | `✓` |
+| [Iteration](/basketball-cs111-breakdown#iteration) | I loop through projectile arrays in `updateProjectiles()` and through filtered coins in reset/spawn logic. | `✓` |
+| [Conditionals](/basketball-cs111-breakdown#conditionals) | I use `if` conditions for caught state, pregame lock, stun, projectile cooldowns, collision checks, and win conditions. | `✓` |
+| [Nested Conditions](/basketball-cs111-breakdown#nested-conditions) | The `update()` method layers multiple conditions like timer checks, caught state, stun state, and collision outcomes. | `✓` |
+| [Numbers](/basketball-cs111-breakdown#numbers) | The code uses positions, cooldowns, speed, survival time, projectile radius, and score math. | `✓` |
+| [Strings](/basketball-cs111-breakdown#strings) | The code uses sprite IDs, dialogue text, HUD text, localStorage keys, and direction names. | `✓` |
+| [Booleans](/basketball-cs111-breakdown#booleans) | State flags include `caught`, `preGameLocked`, `scoreSubmittedThisRound`, `levelCompleted`, and `completionTriggered`. | `✓` |
+| [Arrays](/basketball-cs111-breakdown#arrays) | Arrays are used for `this.classes`, `this.projectiles`, and filtered collections of coins or game objects. | `✓` |
+| [Objects (JSON)](/basketball-cs111-breakdown#objects-json) | Player, chaser, barrier, and coin setup all use object literals for configuration. | `✓` |
+| [Mathematical Operators](/basketball-cs111-breakdown#mathematical-operators) | The chase system uses subtraction, division, multiplication, and addition with `dx`, `dy`, `dist`, and speed scaling. | `✓` |
+| [String Operations](/basketball-cs111-breakdown#string-operations) | Template literals build HUD text and dynamic CSS positions like `` `${projectile.x - projectile.radius}px` ``. | `✓` |
+| [Boolean Expressions](/basketball-cs111-breakdown#boolean-expressions) | Compound comparisons and `&&` logic are used in hitbox collision and input/state checks. | `✓` |
+| [Keyboard Input](/basketball-cs111-breakdown#keyboard-input) | `keydown` listeners handle restart with `R` and shooting with `E`. | `✓` |
+| [Canvas Rendering](/basketball-cs111-breakdown#canvas-rendering) | `drawProjectileSprite()` renders the basketball projectile directly on a canvas with arc and curve drawing commands. | `✓` |
+| [GameEnv Configuration](/basketball-cs111-breakdown#gameenv-configuration) | The level uses `gameEnv.innerWidth`, `gameEnv.innerHeight`, `gameEnv.path`, `gameEnv.container`, and `gameEnv.stats`. | `✓` |
+| [API Integration](/basketball-cs111-breakdown#api-integration) | The level submits a score through the leaderboard system using `submitScore(...)`. | `✓` |
+| [Asynchronous I/O](/basketball-cs111-breakdown#asynchronous-io) | Score submission is handled as an async promise with `.catch(...)`. | `✓` |
+| [JSON Parsing](/basketball-cs111-breakdown#json-parsing) | The level works with structured game config objects and stats objects; API response handling is delegated through the leaderboard module. | `✓` |
+| [Code Comments](/basketball-cs111-breakdown#code-comments) | The file includes explanatory comments around chase behavior, fairness, and hitbox alignment. | `✓` |
+| [Mini-Lesson Documentation](/basketball-cs111-breakdown#mini-lesson-documentation) | I created the Basketball concepts breakdown page and linked it from my portfolio. | `✓` |
+| [Code Highlights](/basketball-cs111-breakdown#code-highlights) | The portfolio now includes highlighted snippets and explanations for Basketball logic. | `✓` |
+| [Console Debugging](/basketball-cs111-breakdown#console-debugging) | The Kirby project includes strategic logs in the broader lesson flow and can be debugged through stateful methods in this level. | `✓` |
+| [Hit Box Visualization](/basketball-cs111-breakdown#hit-box-visualization) | The level uses custom hitbox rectangle logic in `getHitboxRect()` and `isHitboxCollision()` to refine collisions. | `✓` |
+| [Source-Level Debugging](/basketball-cs111-breakdown#source-level-debugging) | The level is broken into named methods, which makes it straightforward to inspect with DevTools breakpoints. | `✓` |
+| [Network Debugging](/basketball-cs111-breakdown#network-debugging) | Leaderboard submission can be inspected in the Network tab when scores are posted. | `✓` |
+| [Application Debugging](/basketball-cs111-breakdown#application-debugging) | `localStorage` is used for best time and best coins with `loadBestTime()`, `saveBestTime()`, `loadBestCoins()`, and `saveBestCoins()`. | `✓` |
+| [Element Inspection](/basketball-cs111-breakdown#element-inspection) | The HUD and projectile canvases are created dynamically in the DOM, making them inspectable in the Elements panel. | `✓` |
+| [Gameplay Testing](/basketball-cs111-breakdown#gameplay-testing) | The level supports repeated playthroughs with reset, caught, and completion flows. | `✓` |
+| [Integration Testing](/basketball-cs111-breakdown#integration-testing) | Leaderboard behavior can be tested by playing the level and submitting a score. | `✓` |
+| [API Error Handling](/basketball-cs111-breakdown#api-error-handling) | `submitRoundScore()` catches failed leaderboard submissions with `.catch((err) => console.warn(...))`. | `✓` |
 
 # GameLevelBasketball Final Project Rubric Alignment
 
