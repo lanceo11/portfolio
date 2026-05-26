@@ -44,6 +44,10 @@ The core gameplay loop is simple:
 
 That simple loop gives one file a lot of real CS concepts to explain.
 
+## Required Evidence for College Credit
+
+This page follows the CS 111 evidence table directly. For each concept below, I name the required project evidence, the assessment method, and then explain how the basketball project demonstrates it. Most proof comes from [`GameLevelBasketball.js`](/Users/lanceoberiano/lanceo11/portfolio/_projects/kirby-minigames/levels/GameLevelBasketball.js), and when the rubric explicitly asks for class-writing evidence, I also reference the supporting classes it instantiates: [`Player.js`](/Users/lanceoberiano/lanceo11/portfolio/assets/js/GameEnginev1.1/essentials/Player.js), [`Npc.js`](/Users/lanceoberiano/lanceo11/portfolio/assets/js/GameEnginev1.1/essentials/Npc.js), and [`Coin.js`](/Users/lanceoberiano/lanceo11/portfolio/assets/js/GameEnginev1.1/Coin.js).
+
 ## Software Engineering Practices
 
 This file is organized into focused methods instead of one giant function.
@@ -64,19 +68,56 @@ constructor(gameEnv) {
 <a id="writing-classes"></a>
 ### Writing Classes
 
-- `class GameLevelBasketball` is the custom blueprint for the basketball minigame.
-- A class lets the project keep state and behavior together.
-- The constructor runs when a new level object is created.
-- The constructor stores setup data like starting positions, cooldowns, and state flags.
-- It does not try to run the full game loop by itself.
+**Project Evidence Required:** Create a minimum of 2 custom character classes extending base classes.  
+**Assessment Method:** Code review of `Player.js`, `NPC.js`, `Enemy.js`-style class definitions.
+
+```js
+class Player extends Character {
+  constructor(data = null, gameEnv = null) {
+    super(data, gameEnv);
+  }
+}
+```
+
+```js
+class Npc extends Character {
+  constructor(data = null, gameEnv = null) {
+    super(data, gameEnv);
+  }
+}
+```
+
+```js
+class Coin extends Npc {
+  constructor(data = null, gameEnv = null) {
+    super(coinData, gameEnv);
+  }
+}
+```
+
+```js
+this.classes = [
+  { class: Player, data: sprite_data_player },
+  { class: Npc, data: sprite_data_chaser },
+  { class: Coin, data: coin_1 }
+];
+```
+
+- `GameLevelBasketball.js` proves these classes are actually used in a live level, not just defined somewhere else.
+- `Player` and `Npc` both extend `Character`, and `Coin` extends `Npc`, so the project exceeds the minimum two-class requirement.
+- The level file instantiates those classes through `this.classes`, which ties the class-writing evidence directly to gameplay.
 
 <a id="methods-and-parameters"></a>
-### Methods and Parameters
+### Methods & Parameters
+
+**Project Evidence Required:** Implement methods with parameters, such as `collisionHandler(other, direction)`.  
+**Assessment Method:** Code review of method signatures with 2 or more parameters.
 
 ```js
 updateProjectiles(now, lebron) { ... }
 spawnProjectileFromPlayer(player, now) { ... }
 isHitboxCollision(a, b) { ... }
+drawProjectileSprite(ctx, width, height) { ... }
 ```
 
 - Methods are functions that belong to the class.
@@ -84,6 +125,7 @@ isHitboxCollision(a, b) { ... }
 - `now` gives the current time so cooldowns and lifetimes can be checked.
 - `player`, `lebron`, `a`, and `b` let the methods work with different objects.
 - This makes the code reusable instead of hardcoding everything for one exact case.
+- This satisfies the rubric clearly because several methods take two or three parameters and use them for different gameplay situations.
 
 <a id="single-responsibility"></a>
 ### Single Responsibility and Organization
@@ -123,7 +165,10 @@ class GameLevelBasketball {
 - That is OOP because state and behavior live together inside one object.
 
 <a id="instantiation-and-objects"></a>
-### Instantiation and Objects
+### Instantiation & Objects
+
+**Project Evidence Required:** Instantiate game objects in `GameLevel` configuration.  
+**Assessment Method:** Code review of `GameLevel` setup objects.
 
 ```js
 this.classes = [
@@ -145,12 +190,8 @@ this.classes = [
 <a id="inheritance-basic"></a>
 ### Inheritance (Basic)
 
-```js
-import Player from '@assets/js/GameEnginev1.1/essentials/Player.js';
-import Npc from '@assets/js/GameEnginev1.1/essentials/Npc.js';
-import Coin from '@assets/js/GameEnginev1.1/Coin.js';
-import Barrier from '@assets/js/GameEnginev1.1/essentials/Barrier.js';
-```
+**Project Evidence Required:** Create a class hierarchy with 2 or more levels, such as `GameObject -> Character -> Player`.  
+**Assessment Method:** Code review of the `extends` keyword and the inheritance chain.
 
 ```js
 class Player extends Character {
@@ -179,28 +220,70 @@ class Coin extends Npc {
 - `Player`, `Npc`, and `Coin` are part of an inheritance chain.
 - Child classes reuse behavior from parent classes.
 - That keeps shared movement and object logic from being rewritten over and over.
-- Even though `GameLevelBasketball` is not an `extends` class, it still demonstrates inheritance by using these engine classes.
+- `GameLevelBasketball.js` demonstrates this requirement by importing and instantiating those inherited classes inside one level.
 
 <a id="method-overriding"></a>
 ### Method Overriding
 
-- Engine classes can override lifecycle behavior such as `update()` or `draw()`.
-- Overriding means a child class replaces a parent version with its own version.
-- The basketball level also defines its own `update()` flow for this specific game.
-- That is how the project gets custom gameplay instead of only default engine behavior.
+**Project Evidence Required:** Override parent methods such as `update()`, `draw()`, or `handleCollision()`.  
+**Assessment Method:** Code review of polymorphic implementations.
+
+```js
+update() {
+  super.update();
+  ...
+}
+```
+
+```js
+draw() {
+  if (!this.ctx) return;
+  ...
+  this.setupCanvas();
+}
+```
+
+```js
+handleCollisionReaction(other) {
+  ...
+  super.handleCollisionReaction(other);
+}
+```
+
+- `Player.js` overrides `update()` and `handleCollisionReaction(other)`.
+- `Npc.js` overrides `update()` to add patrol and interaction behavior.
+- `Coin.js` overrides `update()` and `draw()` to add collection and custom rendering.
+- `GameLevelBasketball.js` depends on those overridden methods when it creates the player, chaser, and coins.
 
 <a id="constructor-chaining"></a>
 ### Constructor Chaining
 
+**Project Evidence Required:** Use `super()` to chain constructors.  
+**Assessment Method:** Code review of `super(data, gameEnv)` calls.
+
+```js
+constructor(data = null, gameEnv = null) {
+  super(data, gameEnv);
+}
+```
+
+```js
+constructor(data = null, gameEnv = null) {
+  super(coinData, gameEnv);
+}
+```
+
 - Constructor chaining happens when a child constructor calls `super(...)`.
-- In the engine, `Player`, `Npc`, and `Coin` pass setup work to their parent classes first.
-- That lets parent classes initialize shared behavior before child-specific details are added.
-- The basketball level depends on that chain whenever it creates engine objects from `this.classes`.
+- `Player`, `Npc`, and `Coin` all do this so the parent classes initialize shared game-object behavior first.
+- The basketball level relies on that constructor chain every time it instantiates one of those classes from `this.classes`.
 
 ## Data Types and Object Literals
 
 <a id="numbers"></a>
 ### Numbers
+
+**Project Evidence Required:** Use numeric data for position, velocity, timing, or score tracking.  
+**Assessment Method:** Code review of numeric properties and calculations.
 
 ```js
 this.projectileSpeed = 9;
@@ -219,6 +302,9 @@ this.targetSurvivalSeconds = 20;
 <a id="strings"></a>
 ### Strings
 
+**Project Evidence Required:** Use strings for character names, sprite paths, or game text.  
+**Assessment Method:** Code review of string values and text output.
+
 ```js
 id: 'BasketballPlayer',
 greeting: 'Ball handler ready.',
@@ -233,6 +319,9 @@ dialogues: ['LeBron is in the gym.']
 
 <a id="booleans"></a>
 ### Booleans
+
+**Project Evidence Required:** Use flags such as `isJumping`, `isPaused`, or `isVulnerable`.  
+**Assessment Method:** Code review of boolean state and logic.
 
 ```js
 this.caught = false;
@@ -250,6 +339,9 @@ this.completionTriggered = false;
 <a id="arrays"></a>
 ### Arrays
 
+**Project Evidence Required:** Use arrays for game object collections or level data.  
+**Assessment Method:** Code review of array operations.
+
 ```js
 this.projectiles = [];
 this.classes = [ ... ];
@@ -263,6 +355,9 @@ dialogues: ['LeBron is in the gym.']
 
 <a id="objects-json"></a>
 ### Objects (JSON)
+
+**Project Evidence Required:** Use configuration objects and structured data.  
+**Assessment Method:** Code review of object literals and nested properties.
 
 ```js
 const coin_1 = {
@@ -283,7 +378,10 @@ const coin_1 = {
 ## Operators and Mathematical Reasoning
 
 <a id="mathematical-operators"></a>
-### Mathematical Operators
+### Mathematical
+
+**Project Evidence Required:** Use math for movement, collisions, or timing.  
+**Assessment Method:** Code review of `+`, `-`, `*`, `/`, and math helpers in gameplay logic.
 
 ```js
 const dx = player.position.x - lebron.position.x;
@@ -304,6 +402,9 @@ lebron.position.y += (dy / dist) * speed;
 <a id="string-operations"></a>
 ### String Operations
 
+**Project Evidence Required:** Use template literals or concatenation for text output.  
+**Assessment Method:** Code review of string-building logic.
+
 ```js
 this.timeHud.textContent =
   `Time: ${this.currentTime.toFixed(1)}s/${this.targetSurvivalSeconds}s | Best: ${this.bestTime.toFixed(1)}s | ` +
@@ -317,6 +418,9 @@ this.timeHud.textContent =
 
 <a id="boolean-expressions"></a>
 ### Boolean Expressions
+
+**Project Evidence Required:** Use compound conditions in game logic.  
+**Assessment Method:** Code review of `&&`, `||`, and `!`.
 
 ```js
 if (event.key.toLowerCase() !== 'e' || event.repeat) return;
@@ -334,6 +438,9 @@ if (now - this.lastShotAt < this.shootCooldownMs) return;
 
 <a id="conditionals"></a>
 ### Conditionals
+
+**Project Evidence Required:** Implement collision detection and state transitions with `if/else`.  
+**Assessment Method:** Code review of conditionals and nested decisions.
 
 ```js
 update() {
@@ -366,6 +473,9 @@ update() {
 <a id="nested-conditions"></a>
 ### Nested Conditions
 
+**Project Evidence Required:** Implement complex game logic with multi-level conditionals.  
+**Assessment Method:** Code review of multi-step conditional reasoning.
+
 - Nested conditions happen when one decision is inside another.
 - In `update()`, the win check only happens inside the `if (!this.caught)` block.
 - That means the level does not try to win after the player has already lost the round.
@@ -373,6 +483,9 @@ update() {
 
 <a id="iteration"></a>
 ### Iteration
+
+**Project Evidence Required:** Use loops for game object arrays or animation/game-state updates.  
+**Assessment Method:** Code review of `for`, `forEach`, or `while` loops.
 
 ```js
 for (let i = this.projectiles.length - 1; i >= 0; i -= 1) {
@@ -414,6 +527,9 @@ this.completionTriggered = false;
 <a id="keyboard-input"></a>
 ### Keyboard Input
 
+**Project Evidence Required:** Support keyboard controls with event listeners.  
+**Assessment Method:** Testing that key handlers respond correctly.
+
 ```js
 document.addEventListener('keydown', this.handleRestartKey);
 document.addEventListener('keydown', this.handleShootKey);
@@ -438,6 +554,9 @@ handleShootKey(event) {
 <a id="canvas-rendering"></a>
 ### Canvas Rendering
 
+**Project Evidence Required:** Draw sprites, backgrounds, or projectiles with the Canvas API.  
+**Assessment Method:** Code review of `draw()` logic and canvas method usage.
+
 ```js
 drawProjectileSprite(ctx, width, height) {
   const cx = width / 2;
@@ -460,6 +579,9 @@ drawProjectileSprite(ctx, width, height) {
 <a id="gameenv-configuration"></a>
 ### GameEnv Configuration
 
+**Project Evidence Required:** Use shared game settings such as canvas size, container, or game state.  
+**Assessment Method:** Code review of `GameEnv`-based configuration and setup.
+
 ```js
 const width = gameEnv.innerWidth;
 const height = gameEnv.innerHeight;
@@ -477,6 +599,9 @@ const container = this.gameEnv.container || this.gameEnv.gameContainer;
 
 <a id="hit-box-visualization"></a>
 ### Hit Box Visualization
+
+**Project Evidence Required:** Show or refine collision boundaries for better gameplay.  
+**Assessment Method:** Demo or code review of hitbox calculations and adjustments.
 
 ```js
 getHitboxRect(obj) {
@@ -583,6 +708,9 @@ isCircleHittingObject(projectile, obj) {
 <a id="application-debugging"></a>
 ### Application Debugging
 
+**Project Evidence Required:** Inspect cookies, `localStorage`, or session state used by the game.  
+**Assessment Method:** Demo in the browser Application tab.
+
 ```js
 loadBestTime() {
   try {
@@ -601,6 +729,9 @@ loadBestTime() {
 <a id="api-integration"></a>
 ### API Integration
 
+**Project Evidence Required:** Implement leaderboard score saving through an API-backed system.  
+**Assessment Method:** Code review of leaderboard submission flow and error handling.
+
 ```js
 initLeaderboard() {
   if (this.leaderboard) return;
@@ -613,10 +744,14 @@ initLeaderboard() {
 
 - The leaderboard object connects the game to backend score handling.
 - `gameName: 'Basketball'` identifies which game the submitted score belongs to.
-- This shows the project working with an external system, not just local gameplay code.
+- `GameLevelBasketball.js` does not call `fetch(...)` directly, but it does trigger the leaderboard's API workflow through `submitScore(...)`.
+- This still counts as API integration because the level hands score data to a networking component.
 
 <a id="asynchronous-io"></a>
 ### Asynchronous I/O
+
+**Project Evidence Required:** Use promises, `async/await`, or equivalent async behavior for API calls.  
+**Assessment Method:** Code review of promise chains or `async` code.
 
 ```js
 this.leaderboard.submitScore(username, score, 'Basketball')
@@ -631,6 +766,9 @@ this.leaderboard.submitScore(username, score, 'Basketball')
 <a id="api-error-handling"></a>
 ### API Error Handling
 
+**Project Evidence Required:** Protect API calls with guards and failure handling.  
+**Assessment Method:** Code review of submission checks and error capture.
+
 ```js
 if (!this.leaderboard || this.scoreSubmittedThisRound) return;
 ```
@@ -641,7 +779,10 @@ if (!this.leaderboard || this.scoreSubmittedThisRound) return;
 - This is defensive programming around network behavior.
 
 <a id="json-parsing"></a>
-### JSON Parsing and Object Access
+### JSON Parsing
+
+**Project Evidence Required:** Parse or work with JSON-style API or configuration data.  
+**Assessment Method:** Code review of nested property access, structured objects, or JSON handling.
 
 ```js
 this.gameEnv.stats.coinsCollected = 0;
@@ -672,6 +813,9 @@ saveBestCoins() {
 <a id="code-comments"></a>
 ### Code Comments
 
+**Project Evidence Required:** Include comments that explain non-trivial logic.  
+**Assessment Method:** Code review of meaningful documentation in code.
+
 ```js
 // Speed curve -> LeBron gets slightly faster over time but has a cap to keep the game fair
 const speed = Math.min(2.1 + this.currentTime * 0.03, 2.8);
@@ -692,6 +836,9 @@ if (typeof coin.setupCanvas === 'function') {
 <a id="console-debugging"></a>
 ### Console Debugging
 
+**Project Evidence Required:** Use console output to inspect state or failures.  
+**Assessment Method:** Code review of strategic logging in gameplay or API code.
+
 ```js
 console.warn('Failed to emit basketball concept focus event:', err);
 console.warn('Leaderboard score submit failed:', err);
@@ -704,12 +851,18 @@ console.warn('Leaderboard score submit failed:', err);
 <a id="source-level-debugging"></a>
 ### Source-Level Debugging
 
+**Project Evidence Required:** Organize code so breakpoints and step-through debugging are practical.  
+**Assessment Method:** Demo in DevTools Sources tab.
+
 - The file is split into named methods such as `update()`, `updateProjectiles()`, and `submitRoundScore()`.
 - That makes it easier to set breakpoints and inspect variables in DevTools.
 - Smaller methods make cause-and-effect much easier to trace.
 
 <a id="element-inspection"></a>
 ### Element Inspection
+
+**Project Evidence Required:** Inspect DOM and canvas elements while the game runs.  
+**Assessment Method:** Demo in the browser Elements tab.
 
 ```js
 this.timeHud = document.createElement('div');
@@ -724,6 +877,9 @@ canvas: document.createElement('canvas')
 <a id="gameplay-testing"></a>
 ### Gameplay Testing
 
+**Project Evidence Required:** Test level completion, collision logic, and interactions in a live run.  
+**Assessment Method:** Playthrough demo without critical bugs.
+
 - The intro dialogue can be tested to make sure the level starts at the right time.
 - The timer HUD can be tested by surviving and watching it update.
 - Coin collection and respawn can be tested by moving around the arena.
@@ -733,12 +889,18 @@ canvas: document.createElement('canvas')
 <a id="integration-testing"></a>
 ### Integration Testing
 
+**Project Evidence Required:** Test whether gameplay systems, HUD, persistence, and leaderboard work together.  
+**Assessment Method:** End-to-end demo of combined systems.
+
 - Integration testing checks whether multiple systems work together.
 - In this level, gameplay, HUD updates, local storage, and leaderboard submission all connect.
 - A full round is a good test of that combined flow.
 
 <a id="mini-lesson-documentation"></a>
 ### Mini-Lesson Documentation
+
+**Project Evidence Required:** Create a comic or visual post with an embedded runtime game demo.  
+**Assessment Method:** Portfolio review of the mini-lesson in the personal portfolio.
 
 - This page itself works as mini-lesson documentation.
 - It explains course concepts in plain language next to real code.
@@ -747,12 +909,18 @@ canvas: document.createElement('canvas')
 <a id="code-highlights"></a>
 ### Code Highlights
 
+**Project Evidence Required:** Annotate key code snippets for OOP, APIs, collision, and gameplay logic.  
+**Assessment Method:** Portfolio review of highlighted code examples with explanations.
+
 - The page uses short code snippets instead of dumping the entire file.
 - Each snippet highlights one idea such as arrays, collisions, or async behavior.
 - That makes the project easier to study section by section.
 
 <a id="network-debugging"></a>
 ### Network Debugging
+
+**Project Evidence Required:** Inspect API requests, response data, and failures.  
+**Assessment Method:** Demo in the browser Network tab.
 
 - The leaderboard request can be inspected in the browser Network tab.
 - You can verify whether the score request was sent and whether it succeeded.
