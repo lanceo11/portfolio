@@ -163,6 +163,48 @@ drawProjectileSprite(ctx, width, height) {
 - Takes three parameters: the canvas context `ctx`, and the `width` and `height` of the drawing area
 - Uses all three to calculate the center point and radius before drawing the basketball sprite onto its own canvas element
 
+**Text Runner: AABB Hit Box Check**
+
+Run this small JavaScript snippet to verify the exact bounding-box overlap math without booting the full game canvas.
+
+{% capture hitbox_runner_code %}
+const getHitboxRect = (obj) => {
+  const width = obj.width || 0;
+  const height = obj.height || 0;
+  const position = obj.position || { x: 0, y: 0 };
+  const widthReduction = width * 0.2;
+  const heightReduction = height * 0.2;
+
+  return {
+    left: position.x + widthReduction,
+    right: position.x + width - widthReduction,
+    top: position.y + heightReduction,
+    bottom: position.y + height - heightReduction
+  };
+};
+
+const isHitboxCollision = (a, b) => {
+  const ar = getHitboxRect(a);
+  const br = getHitboxRect(b);
+  return (
+    ar.left < br.right &&
+    ar.right > br.left &&
+    ar.top < br.bottom &&
+    ar.bottom > br.top
+  );
+};
+
+const player = { id: 'BasketballPlayer', position: { x: 120, y: 80 }, width: 100, height: 160 };
+const lebron = { id: 'LeBron', position: { x: 175, y: 130 }, width: 90, height: 90 };
+const miss = { id: 'Open Space', position: { x: 320, y: 240 }, width: 90, height: 90 };
+
+console.log('Player hitbox:', JSON.stringify(getHitboxRect(player)));
+console.log('LeBron hitbox:', JSON.stringify(getHitboxRect(lebron)));
+console.log('Overlap check:', isHitboxCollision(player, lebron));
+console.log('Far miss:', isHitboxCollision(player, miss));
+{% endcapture %}
+{% include runners/code.html runner_id="basketball-hitbox-check" language="javascript" code=hitbox_runner_code %}
+
 ---
 
 <a id="instantiation-and-objects"></a>
@@ -316,6 +358,61 @@ for (let i = this.projectiles.length - 1; i >= 0; i -= 1) {
 
 - Iterates backwards so that splicing an item out of the array mid-loop doesn't shift the remaining indices and cause elements to be skipped
 - WHY: a forward splice shifts all remaining elements left, causing every other projectile to be skipped that frame; a backwards pass removes from the end so earlier indices are never affected
+
+**Text Runner: Forward vs Reverse Removal**
+
+Run this to see the exact difference between a forward loop that deletes mid-iteration and a reverse loop that stays stable.
+
+{% capture iteration_runner_code %}
+const makeProjectiles = () => [
+  { id: 'A', remove: false },
+  { id: 'X', remove: true },
+  { id: 'Y', remove: true },
+  { id: 'Z', remove: false }
+];
+
+const runForwardLoop = () => {
+  const projectiles = makeProjectiles();
+  const visited = [];
+  const removed = [];
+
+  for (let i = 0; i < projectiles.length; i += 1) {
+    const projectile = projectiles[i];
+    visited.push(projectile.id);
+    if (projectile.remove) {
+      removed.push(projectile.id);
+      projectiles.splice(i, 1);
+    }
+  }
+
+  console.log('Forward visited:', visited.join(', '));
+  console.log('Forward removed:', removed.join(', ') || '(none)');
+  console.log('Forward remaining:', projectiles.map((projectile) => projectile.id).join(', '));
+};
+
+const runReverseLoop = () => {
+  const projectiles = makeProjectiles();
+  const visited = [];
+  const removed = [];
+
+  for (let i = projectiles.length - 1; i >= 0; i -= 1) {
+    const projectile = projectiles[i];
+    visited.push(projectile.id);
+    if (projectile.remove) {
+      removed.push(projectile.id);
+      projectiles.splice(i, 1);
+    }
+  }
+
+  console.log('Reverse visited:', visited.join(', '));
+  console.log('Reverse removed:', removed.join(', ') || '(none)');
+  console.log('Reverse remaining:', projectiles.map((projectile) => projectile.id).join(', '));
+};
+
+runForwardLoop();
+runReverseLoop();
+{% endcapture %}
+{% include runners/code.html runner_id="basketball-iteration-check" language="javascript" code=iteration_runner_code %}
 
 ```js
 coins.forEach((coin) => {
@@ -566,6 +663,39 @@ lebron.position.y += (dy / dist) * speed;
 ```
 
 - Subtraction finds the direction vector from LeBron to the player, `Math.hypot` computes the distance, division normalizes the vector to length 1, multiplication scales it by speed, and addition moves the position each frame
+
+**Text Runner: Vector Chase Math**
+
+Run this JavaScript snippet to see the exact frame-by-frame vector adjustments used for LeBron's chase logic.
+
+{% capture vector_runner_code %}
+const frames = [
+  { frame: 1, player: { x: 420, y: 240 }, currentTime: 0 },
+  { frame: 2, player: { x: 428, y: 236 }, currentTime: 5 },
+  { frame: 3, player: { x: 436, y: 232 }, currentTime: 10 }
+];
+
+let lebron = { x: 120, y: 100 };
+
+for (const state of frames) {
+  const dx = state.player.x - lebron.x;
+  const dy = state.player.y - lebron.y;
+  const dist = Math.hypot(dx, dy);
+  const speed = Math.min(2.1 + state.currentTime * 0.03, 2.8);
+  const vx = (dx / dist) * speed;
+  const vy = (dy / dist) * speed;
+  const nextX = lebron.x + vx;
+  const nextY = lebron.y + vy;
+
+  console.log(
+    `Frame ${state.frame}: dx=${dx.toFixed(2)}, dy=${dy.toFixed(2)}, dist=${dist.toFixed(2)}, ` +
+    `speed=${speed.toFixed(2)}, vx=${vx.toFixed(2)}, vy=${vy.toFixed(2)}, next=(${nextX.toFixed(2)}, ${nextY.toFixed(2)})`
+  );
+
+  lebron = { x: nextX, y: nextY };
+}
+{% endcapture %}
+{% include runners/code.html runner_id="basketball-vector-check" language="javascript" code=vector_runner_code %}
 
 ```js
 const score = Math.round((this.currentTime * 10) + (this.getCoinsCollected() * 50));
