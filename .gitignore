@@ -84,3 +84,6 @@ _notebooks/**/*_content.md
 
 # Claude Code session artifacts
 .claude/
+venv/
+_site/
+.jekyll-metadata
