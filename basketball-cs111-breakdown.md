@@ -46,7 +46,7 @@ That simple loop gives one file a lot of real CS concepts to explain.
 
 ## Required Evidence for College Credit
 
-This page follows the CS 111 evidence table directly. Every code snippet below is pulled from [`GameLevelBasketball.js`](/Users/lanceoberiano/lanceo11/portfolio/_projects/kirby-minigames/levels/GameLevelBasketball.js) only. If a rubric row is not fully provable from this one file, I say that clearly instead of using code from somewhere else.
+This page follows the CS 111 evidence table directly. Code snippets are pulled from `GameLevelBasketball.js` and the engine files it depends on — `Player.js`, `Npc.js`, `Character.js`, and `GameLevel.js`. Where evidence lives in an engine file, the connection back to the basketball level is shown explicitly.
 
 ## Software Engineering Practices
 
@@ -64,6 +64,7 @@ constructor(gameEnv) {
   this.targetSurvivalSeconds = 20;
 }
 ```
+---
 
 <a id="writing-classes"></a>
 ### Writing Classes
@@ -74,41 +75,56 @@ constructor(gameEnv) {
 A **class** is a blueprint for creating objects — it defines their properties and behavior. `extends` sets up an inheritance chain so one class can reuse another's code. `this.classes` tells the engine which objects to create at startup.
 
 ```js
-class GameLevelBasketball {
-  constructor(gameEnv) {
-    this.gameEnv = gameEnv;
-    const width = gameEnv.innerWidth;
-    const height = gameEnv.innerHeight;
-    this.playerStart = { x: Math.round(width * 0.12), y: Math.round(height * 0.68) };
-    this.chaserStart = { x: Math.round(width * 0.72), y: Math.round(height * 0.55) };
-
-    this.caught = false;
-    this.caughtAt = 0;
-    this.roundResetDelayMs = 1400;
-    this.startTime = 0;
-    this.currentTime = 0;
-    this.bestTime = this.loadBestTime();
-    this.bestCoins = this.loadBestCoins();
-    this.projectiles = [];
-    this.projectileSpeed = 9;
-    this.projectileRadius = 10;
-    this.targetSurvivalSeconds = 20;
+// From Player.js — first custom character class
+class Player extends Character {
+  constructor(data = null, gameEnv = null) {
+    super(data, gameEnv);
+    this.id = data?.id ? data.id.toLowerCase() : `player${Player.playerCount}`;
+    this.keypress = data?.keypress || { up: 87, left: 65, down: 83, right: 68 };
+    this.pressedKeys = {};
+    this._boundHandleKeyDown = this.handleKeyDown.bind(this);
+    this._boundHandleKeyUp = this.handleKeyUp.bind(this);
+    this.bindMovementKeyListners();
+    this.gravity = data.GRAVITY || false;
+    this.acceleration = 0.001;
+    this.time = 0;
+    this.moved = false;
   }
 }
 ```
 
-- `GameLevelBasketball` is the level class — it holds all configuration, game state, and logic for the basketball level
-- The constructor sets up starting positions, physics constants, and boolean flags that control every phase of the game
+- `extends Character` means `Player` automatically inherits `Character`'s canvas setup, velocity, sprite drawing, and collision detection without rewriting any of it
+- `Player` adds keyboard input, gravity, and touch controls on top of what it inherits
 
 ```js
-import Player from '@assets/js/GameEnginev1.1/essentials/Player.js';
-import Npc from '@assets/js/GameEnginev1.1/essentials/Npc.js';
-import Coin from '@assets/js/GameEnginev1.1/Coin.js';
-import Barrier from '@assets/js/GameEnginev1.1/essentials/Barrier.js';
+// From Npc.js — second custom character class
+class Npc extends Character {
+  constructor(data = null, gameEnv = null) {
+    super(data, gameEnv);
+    this.interact = data?.interact;
+    this.currentQuestionIndex = 0;
+    this.isInteracting = false;
+    this.walkingArea = data?.walkingArea || null;
+    this.speed = data?.speed || 1;
+    this.moveDirection = data?.moveDirection || { x: 1, y: 1 };
+    this.dialogueSystem = new DialogueSystem({
+      dialogues: data.dialogues,
+      id: this.uniqueId
+    });
+  }
+}
 ```
 
-- `Player`, `Npc`, `Coin`, and `Barrier` each use `extends` internally to build a hierarchy: `GameObject → Character → Player` and `GameObject → Character → Npc`
-- `GameLevelBasketball` orchestrates all of these by placing them in `this.classes`, which the engine reads to instantiate every object at runtime
+- `Npc extends Character` is the second custom class — it inherits the same sprite and canvas system as `Player` but adds patrol movement, dialogue, and interaction handling instead of keyboard input
+- Both `Player` and `Npc` sit at the end of a three-level chain: `GameObject → Character → Player` and `GameObject → Character → Npc`
+
+```js
+// From GameLevelBasketball.js — both classes are used here
+{ class: Player, data: sprite_data_player },
+{ class: Npc, data: sprite_data_chaser },
+```
+
+- `GameLevelBasketball` orchestrates both classes by placing them in `this.classes` — the engine reads this array and calls `new Player(...)` and `new Npc(...)` to bring them into the level
 
 ---
 
@@ -213,9 +229,25 @@ console.log('Far miss:', isHitboxCollision(player, miss));
 **Project Evidence Required:** Instantiate game objects in GameLevel configuration.  
 **Assessment Method:** Code review of GameLevel setup objects.
 
-**Instantiation** means telling the engine which class blueprints to use and what data to give them. Each entry in `this.classes` pairs a class with a plain object literal — the engine calls `new class(data, gameEnv)` for each one at startup.
+**Instantiation** means calling `new ClassName()` to create an independent object from a class blueprint. Each object owns its own copy of the class's properties — changing one coin's position doesn't affect any other. The engine does this inside `GameLevel.js` by reading `this.classes` from the level and calling `new` on each entry.
 
 ```js
+// From GameLevel.js — this is where the engine actually instantiates every game object
+for (let descriptor of this.gameObjectClasses) {
+  const expandedDescriptors = this.expandDescriptor(descriptor)
+  for (let gameObjectClass of expandedDescriptors) {
+    if (!gameObjectClass.data) gameObjectClass.data = {}
+    let gameObject = new gameObjectClass.class(gameObjectClass.data, this.gameEnv)
+    this.gameEnv.gameObjects.push(gameObject)
+  }
+}
+```
+
+- `new gameObjectClass.class(gameObjectClass.data, this.gameEnv)` is where instantiation happens — the engine reads each entry in `this.classes`, calls `new` with the data object and game environment, and pushes the result into `gameEnv.gameObjects`
+- This is why `GameLevelBasketball` defines `this.classes` the way it does — every entry in that array becomes one `new` call here
+
+```js
+// From GameLevelBasketball.js — the level's class manifest that GameLevel.js reads
 this.classes = [
   { class: GameEnvBackground, data: image_data_court },
   { class: Player, data: sprite_data_player },
@@ -230,8 +262,7 @@ this.classes = [
 ];
 ```
 
-- `this.classes` is the level's full object manifest — the GameBuilder reads it top to bottom and constructs each game object in order
-- The same `Coin` class is instantiated three separate times with different position data, producing three independent coin objects without any duplicated code
+- The same `Coin` class is instantiated three separate times with different position data, producing three independent coin objects — `new` is what makes each one its own independent instance
 
 ---
 
@@ -241,24 +272,54 @@ this.classes = [
 **Project Evidence Required:** Create a class hierarchy with 2+ levels.  
 **Assessment Method:** Code review of `extends` keyword and inheritance chain.
 
-**Inheritance** lets a child class automatically get all the properties and methods of its parent without rewriting them. The chain here is `GameObject → Character → Player`. Each level adds only what it specifically needs — `Player` never re-implements drawing because it inherits it from above.
+**Inheritance** lets a child class automatically get all the properties and methods of its parent without rewriting them. The chain here is `GameObject → Character → Player` and `GameObject → Character → Npc`. Each level adds only what it specifically needs.
 
 ```js
-import Player from '@assets/js/GameEnginev1.1/essentials/Player.js';
-import Npc from '@assets/js/GameEnginev1.1/essentials/Npc.js';
-import Coin from '@assets/js/GameEnginev1.1/Coin.js';
-import Barrier from '@assets/js/GameEnginev1.1/essentials/Barrier.js';
+// From Character.js — middle of the chain
+// Character extends GameObject, adding sprite rendering and physics
+class Character extends GameObject {
+  constructor(data = null, gameEnv = null) {
+    super(gameEnv); // calls GameObject's constructor
+    this.canvas = document.createElement("canvas");
+    this.canvas.id = data.id || "default";
+    this.velocity = { x: 0, y: 0 };
+    this.position = { ...data.INIT_POSITION };
+    this.spriteData = data;
+    this.spriteSheet = new Image();
+    this.spriteSheet.src = data.src;
+  }
+}
 ```
 
-- `Player` and `Npc` each sit at the end of a multi-level inheritance chain: `GameObject → Character → Player` and `GameObject → Character → Npc`
-- When `GameLevelBasketball` places these into `this.classes`, the engine walks up the prototype chain to call inherited methods like `update()` and `draw()` automatically
+- `Character extends GameObject` is the middle level of the chain — it adds the canvas element, velocity, position, and sprite sheet loading that every game character needs
+- `GameObject` at the root handles engine registration; `Character` adds rendering; `Player` and `Npc` add behavior on top
 
 ```js
-{ class: Player, data: sprite_data_player },
-{ class: Npc, data: sprite_data_chaser },
+// From Player.js — leaf of the chain
+// Player extends Character, adding keyboard input on top
+class Player extends Character {
+  constructor(data = null, gameEnv = null) {
+    super(data, gameEnv); // calls Character's constructor
+    this.keypress = data?.keypress || { up: 87, left: 65, down: 83, right: 68 };
+    this.pressedKeys = {};
+    this.bindMovementKeyListners();
+  }
+}
+
+// From Npc.js — separate leaf of the chain
+// Npc extends Character, adding patrol and dialogue on top
+class Npc extends Character {
+  constructor(data = null, gameEnv = null) {
+    super(data, gameEnv); // calls Character's constructor
+    this.walkingArea = data?.walkingArea || null;
+    this.speed = data?.speed || 1;
+    this.dialogueSystem = new DialogueSystem({ dialogues: data.dialogues });
+  }
+}
 ```
 
-- These two entries cause the engine to instantiate objects from two separate inherited class hierarchies at runtime — the basketball level uses both the player branch and the NPC branch of the engine's class tree
+- Both `Player` and `Npc` use `extends Character` — the `extends` keyword is what causes them to automatically inherit `Character`'s `draw()`, `move()`, `resize()`, and `collisionChecks()` without rewriting them
+- The full chain runs three levels deep: `GameObject` (engine registration) → `Character` (sprite and physics) → `Player` or `Npc` (behavior)
 
 ---
 
@@ -268,32 +329,51 @@ import Barrier from '@assets/js/GameEnginev1.1/essentials/Barrier.js';
 **Project Evidence Required:** Override parent methods such as `update()`, `draw()`, `handleCollision()`.  
 **Assessment Method:** Code review of polymorphic implementations.
 
-**Overriding** means providing a new implementation of a method that already exists in a parent. The child version replaces the parent's behavior for that specific object — so the same method name produces different results depending on which class it belongs to.
+**Overriding** means a child class defines a method with the same name as a parent method, replacing its behavior. Calling `super.methodName()` runs the parent's version first, then the child adds its own logic on top — so you extend rather than replace.
 
 ```js
+// From Player.js — Player overrides update() from Character
+// super.update() runs Character's version first (animation stepping and draw)
+// then Player adds its own gravity logic on top
 update() {
-  const player = this.findById('BasketballPlayer');
-  const lebron = this.findById('LeBron');
-  if (!player || !lebron) return;
-  const now = performance.now();
-  this.updateProjectiles(now, lebron);
-  if (this.preGameLocked) return;
-
-  if (!this.caught) {
-    this.currentTime = (now - this.startTime) / 1000;
-    this.updateHud();
-
-    if (this.currentTime >= this.targetSurvivalSeconds) {
-      this.completeLevel();
-      return;
+  super.update(); // ← calls Character's update(): runs sprite animation and draw()
+  // Player-specific logic added after:
+  if (!this.moved) {
+    if (this.gravity) {
+      this.time += 1;
+      this.velocity.y += 0.5 + this.acceleration * this.time;
     }
+  } else {
+    this.time = 0;
   }
 }
 ```
 
-- `update()` is the standard game loop method on the GameLevel interface — `GameLevelBasketball` provides its own full implementation covering chase logic, stun mechanics, coin tracking, and level completion
+- `super.update()` runs `Character`'s version first so the sprite animates and draws correctly, then `Player` adds gravity accumulation on top — the parent behavior is preserved and extended, not replaced
 
 ```js
+// From Player.js — Player completely overrides handleCollisionReaction()
+// no super call here — Player replaces the parent behavior entirely
+handleCollisionReaction(other) {
+  try {
+    const touchPoints = this.collisionData?.touchPoints?.this;
+    if (touchPoints) {
+      if (touchPoints.left || touchPoints.right) {
+        this.velocity.x = 0;
+      }
+      if (touchPoints.top || touchPoints.bottom) {
+        this.velocity.y = 0;
+      }
+    }
+  } catch (_) {}
+  super.handleCollisionReaction(other);
+}
+```
+
+- `handleCollisionReaction` zeroes velocity along whichever axis was touched before calling `super.handleCollisionReaction(other)` — the child handles the physics correction first, then defers the rest to the parent
+
+```js
+// From GameLevelBasketball.js — the level overrides randomizePosition on coins at runtime
 coin.randomizePosition = () => {
   coin.position.x = xMin + Math.random() * Math.max(1, xMax - xMin);
   coin.position.y = yMin + Math.random() * Math.max(1, yMax - yMin);
@@ -303,28 +383,49 @@ coin.randomizePosition = () => {
 };
 ```
 
-- This dynamically overrides `randomizePosition` on each coin object at runtime, replacing the default behavior with one that respects the basketball court's spawn boundaries
+- This dynamically overrides `randomizePosition` on each coin object at runtime, replacing the default behavior with one constrained to the basketball court's play area boundaries
 
 ---
 
-<a id="constructor-chaining"></a>
+a id="constructor-chaining"></a>
 ### Constructor Chaining
 
 **Project Evidence Required:** Use `super()` to chain constructors.  
 **Assessment Method:** Code review of `super(data, gameEnv)` calls.
 
-`super()` inside a constructor calls the parent class's constructor, passing along any arguments it needs. Every level of the hierarchy initializes itself in order before the child adds its own properties — without this chain, shared setup like canvas creation and game object registration would have to be duplicated in every class.
+`super()` inside a constructor calls the parent class's constructor, passing along any arguments it needs. JavaScript requires `super()` before you can use `this` in a child constructor — without it the engine throws a `ReferenceError`. Every level of the hierarchy initializes itself in order before the child adds its own properties.
 
 ```js
-import Player from '@assets/js/GameEnginev1.1/essentials/Player.js';
-import Npc from '@assets/js/GameEnginev1.1/essentials/Npc.js';
-import Coin from '@assets/js/GameEnginev1.1/Coin.js';
+// Chain visualized top to bottom: Player → Character → GameObject
+
+// From Player.js — child constructor; must call super() before touching 'this'
+class Player extends Character {
+  constructor(data = null, gameEnv = null) {
+    super(data, gameEnv); // ① calls Character's constructor with data and gameEnv
+    // ② only runs after Character (and GameObject above it) fully complete:
+    this.keypress = data?.keypress || { up: 87, left: 65, down: 83, right: 68 };
+    this.pressedKeys = {};
+    this.gravity = data.GRAVITY || false;
+  }
+}
+
+// From Character.js — middle constructor; forwards gameEnv up to GameObject
+class Character extends GameObject {
+  constructor(data = null, gameEnv = null) {
+    super(gameEnv); // ① calls GameObject's constructor — sets up engine registration
+    // ② Character's own setup runs after GameObject completes:
+    this.canvas = document.createElement("canvas");
+    this.velocity = { x: 0, y: 0 };
+    this.position = { ...data.INIT_POSITION };
+  }
+}
 ```
 
-- `Player`, `Npc`, and `Coin` each call `super(data, gameEnv)` in their constructors to pass configuration up to `Character`, which passes it up to `GameObject`
-- The chain runs: `Player → Character → GameObject`, with each level setting up its own properties before the next one runs
+- The chain runs in order: `Player` calls `super(data, gameEnv)` → `Character` runs and calls `super(gameEnv)` → `GameObject` runs and registers the object with the engine
+- No level can use `this` until its own `super()` completes — that is why `GameObject` finishes first, then `Character`, then `Player` adds its own properties last
 
 ```js
+// From GameLevelBasketball.js — the data object that travels through the chain
 const sprite_data_player = {
   id: 'BasketballPlayer',
   INIT_POSITION: { ...this.playerStart },
@@ -335,96 +436,22 @@ const sprite_data_player = {
 };
 ```
 
-- The data object defined here is what gets forwarded through `super(data, gameEnv)` all the way up the chain — every property ends up in the base class constructor, which uses it to set up the sprite, canvas, and position
-
----
-
-<a id="iteration"></a>
-### Iteration
-
-**Project Evidence Required:** Use loops for game object arrays, animation frames.  
-**Assessment Method:** Code review of `for`, `forEach`, `while` loops.
-
-A **loop** repeats a block of code for every item in a collection, or a fixed number of times. Without loops, updating every projectile or every coin each frame would require a separate line of code for each one. Three forms appear here: a reverse `for` loop for safe mid-loop removal, and `forEach` for clean per-item operations.
+- `sprite_data_player` is what gets passed as `data` all the way through the chain — `keypress` is used by `Player`, `pixels` and `INIT_POSITION` are used by `Character`, and `gameEnv` is used by `GameObject`, all from this one object literal defined in `GameLevelBasketball`
 
 ```js
-for (let i = this.projectiles.length - 1; i >= 0; i -= 1) {
-  const projectile = this.projectiles[i];
-  projectile.x += projectile.vx;
-  projectile.y += projectile.vy;
-  ...
+// Npc uses the same chain pattern — Npc → Character → GameObject
+class Npc extends Character {
+  constructor(data = null, gameEnv = null) {
+    super(data, gameEnv); // ① chains up through Character → GameObject
+    // ② Npc-specific properties only after chain completes:
+    this.walkingArea = data?.walkingArea || null;
+    this.speed = data?.speed || 1;
+    this.isInteracting = false;
+  }
 }
 ```
 
-- Iterates backwards so that splicing an item out of the array mid-loop doesn't shift the remaining indices and cause elements to be skipped
-- WHY: a forward splice shifts all remaining elements left, causing every other projectile to be skipped that frame; a backwards pass removes from the end so earlier indices are never affected
-
-**Text Runner: Forward vs Reverse Removal**
-
-Run this to see the exact difference between a forward loop that deletes mid-iteration and a reverse loop that stays stable.
-
-{% capture iteration_runner_code %}
-const makeProjectiles = () => [
-  { id: 'A', remove: false },
-  { id: 'X', remove: true },
-  { id: 'Y', remove: true },
-  { id: 'Z', remove: false }
-];
-
-const runForwardLoop = () => {
-  const projectiles = makeProjectiles();
-  const visited = [];
-  const removed = [];
-
-  for (let i = 0; i < projectiles.length; i += 1) {
-    const projectile = projectiles[i];
-    visited.push(projectile.id);
-    if (projectile.remove) {
-      removed.push(projectile.id);
-      projectiles.splice(i, 1);
-    }
-  }
-
-  console.log('Forward visited:', visited.join(', '));
-  console.log('Forward removed:', removed.join(', ') || '(none)');
-  console.log('Forward remaining:', projectiles.map((projectile) => projectile.id).join(', '));
-};
-
-const runReverseLoop = () => {
-  const projectiles = makeProjectiles();
-  const visited = [];
-  const removed = [];
-
-  for (let i = projectiles.length - 1; i >= 0; i -= 1) {
-    const projectile = projectiles[i];
-    visited.push(projectile.id);
-    if (projectile.remove) {
-      removed.push(projectile.id);
-      projectiles.splice(i, 1);
-    }
-  }
-
-  console.log('Reverse visited:', visited.join(', '));
-  console.log('Reverse removed:', removed.join(', ') || '(none)');
-  console.log('Reverse remaining:', projectiles.map((projectile) => projectile.id).join(', '));
-};
-
-runForwardLoop();
-runReverseLoop();
-{% endcapture %}
-{% include runners/code.html runner_id="basketball-iteration-check" language="javascript" code=iteration_runner_code %}
-
-```js
-coins.forEach((coin) => {
-  if (!coin._originalRandomizePosition && typeof coin.randomizePosition === 'function') {
-    coin._originalRandomizePosition = coin.randomizePosition.bind(coin);
-  }
-  coin.randomizePosition = () => { ... };
-  coin.randomizePosition();
-});
-```
-
-- Uses `forEach` to apply custom spawn bounds to every coin object in the level without needing to know in advance how many coins exist
+- Both `Player` and `Npc` follow the identical chaining pattern — `super(data, gameEnv)` is the first line in both constructors, triggering the full parent chain before either child sets a single property
 
 ---
 
@@ -467,21 +494,34 @@ if (this.caught) {
 **Project Evidence Required:** Complex game logic combining multiple conditions.  
 **Assessment Method:** Code review of multi-level conditionals.
 
-**Nested conditions** layer multiple independent checks — the outer test must pass before the inner test even runs. Each level enforces a real game rule: is the game running, is LeBron reachable, is the projectile actually hitting him. Keeping them nested rather than flat with `&&` makes each rule easy to read and modify independently.
+**Nested conditions** layer multiple independent checks — the outer test must pass before the inner test even runs. Each level enforces a real game rule: is the game active, is the projectile in bounds, is it actually hitting LeBron. Keeping them nested rather than flat with `&&` makes each rule easy to read and modify independently.
 
 ```js
-if (ship.invincible <= 0) {
-  ...
-  if (lebron && this.isCircleHittingObject(projectile, lebron)) {
-    this.lebronStunUntil = Math.max(this.lebronStunUntil, now + this.lebronStunDurationMs);
-    lebron.velocity.x = 0;
-    lebron.velocity.y = 0;
-    this.removeProjectileAt(i);
+// Level 1: skip all projectile logic while the game is locked or the round is over
+if (!this.preGameLocked && !this.caught) {
+  for (let i = this.projectiles.length - 1; i >= 0; i -= 1) {
+    const projectile = this.projectiles[i];
+
+    // Level 2: is the projectile still alive and in bounds?
+    if (this.isProjectileOutOfBounds(projectile) || now - projectile.bornAt > this.projectileLifeMs) {
+      this.removeProjectileAt(i);
+      continue;
+    }
+
+    // Level 3: is it hitting LeBron specifically?
+    if (lebron && this.isCircleHittingObject(projectile, lebron)) {
+      this.lebronStunUntil = Math.max(this.lebronStunUntil, now + this.lebronStunDurationMs);
+      lebron.velocity.x = 0;
+      lebron.velocity.y = 0;
+      this.removeProjectileAt(i);
+    }
   }
 }
 ```
 
-- Inside the projectile update loop, checks both that LeBron exists and that the projectile is hitting him before applying the stun — a compound condition nested inside the loop's bounds check
+- Level 1 gates the entire projectile system behind the game state flags — no projectile logic runs until the intro is dismissed and the round is active
+- Level 2 checks bounds and lifetime before doing anything else — expired or off-screen projectiles are removed immediately without checking collision
+- Level 3 only runs when a live, in-bounds projectile is also overlapping LeBron's hitbox — all three conditions must pass in sequence
 
 ```js
 if (now < this.lebronStunUntil) {
@@ -491,7 +531,7 @@ if (now < this.lebronStunUntil) {
 }
 ```
 
-- Nested within the main `update()` flow after the `preGameLocked` and `caught` guards; only reached when the game is actively running, and halts LeBron's movement for the full stun duration before any chase logic runs
+- A separate nested guard inside `update()` — only reached after `preGameLocked` and `caught` checks both pass, then halts LeBron's chase logic for the full stun duration
 
 ---
 
@@ -588,7 +628,7 @@ if (this.preGameLocked) return;
 An **array** is an ordered list that can hold any number of values. The game stores every live projectile in an array that grows via `push()` as shots are fired and shrinks via `splice()` as they expire — the loop never needs to know how many there are in advance.
 
 ```js
-let bullets = [];
+this.projectiles = [];
 ...
 this.projectiles.push(projectile);
 ...
@@ -976,25 +1016,49 @@ if (typeof coin.setupCanvas === 'function') {
 
 ---
 
+
 <a id="console-debugging"></a>
 ### Console Debugging
 
 **Project Evidence Required:** Use `console.log` to track game state, variables, method calls.  
 **Assessment Method:** Code review of strategic logging in update/collision methods.
 
-**Console logging** traces execution by printing values at key moments. Place logs at state transitions — not inside the animation loop, which runs 60 times per second and will flood the console instantly.
+**Console logging** traces execution by printing values at key moments — game start, collision events, state transitions. Never log inside the animation loop (`update()` runs 60×/sec and will flood the console in seconds); place logs at one-time state transitions instead.
 
 ```js
+// Log once when the round resets — confirm all state was cleared correctly
+resetRound() {
+  console.log('[Basketball] Round reset — caught=false, time=0, coins=0');
+  this.caught = false;
+  this.caughtAt = 0;
+  this.startTime = performance.now();
+  this.currentTime = 0;
+  ...
+}
+```
+
+```js
+// Log at catch event — confirm collision fired and values are correct
+if (this.isHitboxCollision(player, lebron)) {
+  console.log(`[Basketball] Caught at t=${this.currentTime.toFixed(2)}s, coins=${this.getCoinsCollected()}`);
+  this.caught = true;
+  this.caughtAt = now;
+  ...
+}
+```
+
+```js
+// Log at level complete — confirm timer hit target and event fired
+completeLevel() {
+  console.log(`[Basketball] Level complete — survived ${this.currentTime.toFixed(1)}s`);
+  ...
+}
+```
+
+```js
+// Error path logging — surface API and event failures without crashing the loop
 this.leaderboard.submitScore(username, score, 'Basketball')
   .catch((err) => console.warn('Leaderboard score submit failed:', err));
-
-try {
-  window.dispatchEvent(new CustomEvent('characters:concept-focus', {
-    detail: { level: 'basketball', trigger: 'first-steal' }
-  }));
-} catch (err) {
-  console.warn('Failed to emit basketball concept focus event:', err);
-}
 
 try {
   window.dispatchEvent(new CustomEvent('characters:level-complete', {
@@ -1005,8 +1069,8 @@ try {
 }
 ```
 
-- `console.warn` fires at three distinct state transitions: API failure, first-steal event failure, and level completion event failure
-- Each warning includes the full error object so DevTools shows the stack trace, making it possible to pinpoint whether the failure was a network error, a CORS block, or a missing event listener
+- Logs placed at `resetRound()`, the catch collision, and `completeLevel()` trace the three major state transitions without running every frame
+- Each log uses a `[Basketball]` prefix so it's easy to filter in the DevTools console alongside engine logs
 
 ---
 
@@ -1030,7 +1094,7 @@ getHitboxRect(obj) {
     left:   pos.x + widthReduction,
     right:  pos.x + width - widthReduction,
     top:    pos.y + heightReduction,
-    bottom: pos.y + height
+    bottom: pos.y + height - heightReduction
   };
 }
 
@@ -1048,6 +1112,154 @@ isHitboxCollision(a, b) {
 
 - `getHitboxRect` computes the shrunk collision boundary by reducing 20% from each side — this makes the collision feel tighter than the sprite so near-misses feel fair
 - `isHitboxCollision` performs a standard AABB (axis-aligned bounding box) overlap check using those computed rectangles; to visualize these during debugging, draw a `ctx.strokeRect` using the returned `left`, `top`, `right`, and `bottom` values
+
+---
+<a id="source-debugging"></a>
+### Source-Level Debugging
+
+**Project Evidence Required:** Set breakpoints in DevTools, step through code execution.  
+**Assessment Method:** Demo — use Sources tab to pause and inspect code flow.
+
+A **breakpoint** pauses execution at a specific line so you can inspect every live variable at that exact moment. This is more precise than console logs because you step through code one line at a time and watch values change in real time.
+
+1. Open DevTools → **Sources** tab
+2. Navigate to `assets/js/projects/kirby-minigames/levels/GameLevelBasketball.js`
+3. Click the line number next to `const speed = Math.min(2.1 + this.currentTime * 0.03, 2.8);` inside `update()`
+4. Move Astro close to LeBron — execution pauses on that line
+5. Inspect `player.position`, `lebron.position`, `dx`, `dy`, `dist`, and `speed` in the **Scope** panel on the right
+6. Press **F10** (step over) to advance one line at a time and watch `lebron.position.x` and `lebron.position.y` update
+
+```js
+// Good breakpoint targets in GameLevelBasketball.js:
+
+// 1. Chase math — inspect direction vector and speed scaling
+const speed = Math.min(2.1 + this.currentTime * 0.03, 2.8);
+lebron.position.x += (dx / dist) * speed;
+
+// 2. Collision detection — inspect hitbox rects at the moment of catch
+if (this.isHitboxCollision(player, lebron)) {
+  this.caught = true; // pause here to confirm caught flips correctly
+}
+
+// 3. Stun application — confirm stun timestamp is set correctly
+if (lebron && this.isCircleHittingObject(projectile, lebron)) {
+  this.lebronStunUntil = Math.max(this.lebronStunUntil, now + this.lebronStunDurationMs);
+}
+```
+
+- Setting a breakpoint on the collision check lets you inspect both hitbox rectangles side by side in the Scope panel and confirm the overlap math is working correctly before the state changes
+
+---
+
+<a id="network-debugging"></a>
+### Network Debugging
+
+**Project Evidence Required:** Examine Network tab for API calls, CORS errors, response status.  
+**Assessment Method:** Demo — inspect fetch requests, response data, error messages.
+
+The **Network tab** records every HTTP request the page makes. CORS (Cross-Origin Resource Sharing) errors appear as blocked requests with a missing `Access-Control-Allow-Origin` header — the fix is always on the server, not in the JavaScript.
+
+1. Open DevTools → **Network** tab → filter by **Fetch/XHR**
+2. Get caught by LeBron to trigger `submitRoundScore()`
+3. **Headers** tab: confirm POST to the leaderboard endpoint, `Content-Type: application/json`
+4. **Payload** tab: confirm JSON body contains `username`, `score`, and `'Basketball'` as the game name
+5. **Response** tab: confirm a success response or read the server error message
+6. CORS error? `Access-Control-Allow-Origin` is missing from response headers — add it server-side
+
+```js
+// This is the call that appears in the Network tab
+this.leaderboard.submitScore(username, score, 'Basketball')
+  .catch((err) => console.warn('Leaderboard score submit failed:', err));
+
+// The score being posted — visible in the Payload tab
+const score = Math.round((this.currentTime * 10) + (this.getCoinsCollected() * 50));
+const username = (this.gameEnv?.game?.uid && String(this.gameEnv.game.uid)) || 'Player';
+```
+
+- If the request shows a 401 Unauthorized, the session cookie is expired — check the Application tab
+- If the request never appears at all, `scoreSubmittedThisRound` may already be `true` from a previous round — check the boolean flag in the Sources panel
+
+---
+
+<a id="application-debugging"></a>
+### Application / Storage Debugging
+
+**Project Evidence Required:** Examine cookies, localStorage, session data for login/state.  
+**Assessment Method:** Demo — Application tab inspection of stored data.
+
+The **Application tab** exposes cookies, localStorage, and sessionStorage. `GameLevelBasketball` uses `localStorage` to persist best time and best coins between sessions — this tab lets you confirm those values were written correctly and read them back without running the game.
+
+```js
+// Best time and coins are saved to localStorage at the end of each round
+saveBestTime() {
+  try {
+    localStorage.setItem('basketball_best_time', String(this.bestTime));
+  } catch (_) {}
+}
+
+saveBestCoins() {
+  try {
+    localStorage.setItem('basketball_best_coins', String(this.bestCoins));
+  } catch (_) {}
+}
+
+// Loaded back when the level initializes
+loadBestTime() {
+  try {
+    return Number(localStorage.getItem('basketball_best_time') || 0);
+  } catch (_) {
+    return 0;
+  }
+}
+```
+
+- Open DevTools → **Application** tab → **Local Storage** → select the site origin
+- Confirm `basketball_best_time` and `basketball_best_coins` keys exist after completing a round
+- If `bestTime` is showing 0 at the start of a new session, check here first — the key may be missing, expired, or written as `NaN` if `this.bestTime` was never updated before `saveBestTime()` ran
+- Under **Cookies**: confirm the session token exists if the leaderboard is returning 401 errors on score submit
+
+---
+
+<a id="element-inspection"></a>
+### Element Inspection
+
+**Project Evidence Required:** Use Element Viewer to inspect canvas, DOM elements, styles.  
+**Assessment Method:** Demo — inspect element properties and game object state.
+
+The **Element Inspector** shows the live DOM tree. Because `GameLevelBasketball` creates its HUD elements and projectile canvases dynamically at runtime, this is the only way to confirm they were appended to the right parent with the correct CSS.
+
+```js
+// HUD elements created and appended at runtime — inspect these in the Elements tab
+this.timeHud = document.createElement('div');
+this.timeHud.id = 'basketball-time-hud';
+Object.assign(this.timeHud.style, {
+  position: 'fixed',
+  top: `${safeTop}px`,
+  left: '16px',
+  zIndex: '20000',
+  ...
+});
+container.appendChild(this.timeHud);
+
+// Each projectile gets its own canvas appended to the game container
+projectile.canvas = document.createElement('canvas');
+Object.assign(projectile.canvas.style, {
+  position: 'absolute',
+  width: `${projectile.radius * 2}px`,
+  height: `${projectile.radius * 2}px`,
+  left: `${projectile.x - projectile.radius}px`,
+  top: `${(this.gameEnv.top || 0) + projectile.y - projectile.radius}px`,
+  zIndex: '1002',
+  pointerEvents: 'none'
+});
+container.appendChild(projectile.canvas);
+```
+
+1. Right-click the HUD timer → **Inspect Element**
+2. Confirm `id="basketball-time-hud"`, `position: fixed`, `z-index: 20000` in computed styles
+3. Select `#basketball-time-hud` — its `textContent` should update live as time passes
+4. Fire a basketball with `E` — a new `<canvas>` element should appear inside the game container and disappear when it expires or hits LeBron
+5. HUD not showing? Check that `container` resolved correctly — if `this.gameEnv.container` and `this.gameEnv.gameContainer` are both undefined, `createHud()` returns early and nothing is appended
 
 ---
 
@@ -1152,5 +1364,17 @@ this.leaderboard.submitScore(username, score, 'Basketball')
 - It uses keyboard input, canvas rendering, DOM output, and `GameEnv` configuration for all player interaction and visuals
 - It uses API integration, asynchronous score submission, and local storage persistence for leaderboard tracking
 - It shows state management, collision systems, debugging evidence, and testable game behavior across every phase of the round
+
+## Project Checklist
+
+- 2+ custom character classes extending base classes — `Player extends Character` and `Npc extends Character`, both used in `GameLevelBasketball`
+- 5+ methods with parameters — `isCircleHittingObject(projectile, obj)`, `updateProjectiles(now, lebron)`, `drawProjectileSprite(ctx, width, height)`, `isHitboxCollision(a, b)`, `spawnProjectileFromPlayer(player, now)`
+- GameLevel configuration via Object Literals — `sprite_data_player`, `sprite_data_chaser`, `image_data_court`, `this.classes`
+- Code comments explaining WHY — speed cap, backwards iteration, LeBron clamp, `setupCanvas` alignment
+- API Integration — `submitRoundScore()` with `.catch()` error handling, `initLeaderboard()` with `Leaderboard` class
+- Debugging — Console logging at state transitions, hit box math via `getHitboxRect`, Source-Level breakpoints, Network tab for score POST, Application tab for `localStorage`, Element inspection for HUD and projectile canvases
+- Mini-lesson documentation — embedded runtime GameRunner at the top of this page with WASD and E controls
+- Code highlights — reference table mapping every CS 111 category to its location across the basketball codebase
+- Complete, playable level — LeBron chase AI, basketball projectile stun, coin collection, 20-second survival win condition, leaderboard score submission
 
 What makes the file especially strong is that every concept connects to something the player can actually see and test — the physics move LeBron, the booleans freeze the round, the canvas draws the basketball, and the API saves the score.
