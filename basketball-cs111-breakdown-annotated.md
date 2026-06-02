@@ -138,6 +138,7 @@ class Npc extends Character {                                         // Npc is 
 **Assessment Method:** Code review of method signatures with 2 or more parameters.
 
 A **method** is a function that belongs to a class; it uses `this` to access the instance's own data. **Parameters** are the named inputs declared in parentheses — they let one method body handle many different callers without duplicating code.
+- Parameters are what is required for methods to work
 
 ```js
 isCircleHittingObject(projectile, obj) {              // checks if a flying ball has hit a rectangular target
@@ -152,6 +153,8 @@ isCircleHittingObject(projectile, obj) {              // checks if a flying ball
 
 - **This method has nothing to do with the sprite image** — it works entirely with invisible numbers (positions and a radius). The sprite is just the orange circle drawn on screen; this method is the math that decides whether that circle's center is close enough to Kirby's hitbox rectangle to count as a hit. You could delete the sprite entirely and the collision would still work.
 - This is the method that makes shooting Kirby feel accurate — if the ball's center lands within its own radius of Kirby's box, it registers as a stun.
+- Method checks if plyaer's basketball hits Kirby
+- If it hits Kirby, the method turns true and triggers the next action, which is freezing Kirby
 
 ```js
 updateProjectiles(now, lebron) {                         // moves every flying ball and checks for hits each frame
@@ -164,8 +167,9 @@ updateProjectiles(now, lebron) {                         // moves every flying b
 }
 ```
 
-- `now` is used to expire old projectiles (each shot has a `bornAt` timestamp and a `projectileLifeMs` limit), and `lebron` is passed in so the method can immediately check `isCircleHittingObject` — both parameters are doing real work every frame.
-- This is the method that makes every shot actually travel across the court and disappear when it misses or hits.
+- `now` is used to expire old projectiles (each shot has a `bornAt` timestamp and a `projectileLifeMs` limit)
+- `lebron` is passed in so the method can immediately check `isCircleHittingObject` —> ensures both parameters are doing real work every frame.
+- This is the method that makes every travel across the court and disappear when it misses or hits.
 
 ```js
 drawProjectileSprite(ctx, width, height) {         // paints a basketball onto an offscreen canvas
@@ -179,7 +183,8 @@ drawProjectileSprite(ctx, width, height) {         // paints a basketball onto a
 }
 ```
 
-- **This is the sprite method** — unlike `isCircleHittingObject`, this one is purely about what the player sees. It draws the orange ball and its seam lines. It never checks positions or radii for collision; it only paints pixels.
+- **This is the sprite method** — unlike `isCircleHittingObject`, this one is purely about what the player sees. 
+- It draws the orange ball and its seam lines. It never checks positions or radii for collision; it only paints pixels.
 - Every projectile gets its own mini-canvas, and this method is what makes that canvas look like a basketball instead of a blank square.
 
 **Text Runner: AABB Hit Box Check**
@@ -224,6 +229,10 @@ console.log('Far miss:', isHitboxCollision(player, miss));
 {% endcapture %}
 {% include runners/code.html runner_id="basketball-hitbox-check" language="javascript" code=hitbox_runner_code %}
 
+- This code runner shows the updating logic between the class, method, and parameters
+- It checks if the hitbox between the User and Enemy AI are overlapping, in this case they are
+- It proves the interaction is working because `far miss: false` shows that the two characters not touching was FALSE
+
 ---
 
 <a id="instantiation-and-objects"></a>
@@ -232,7 +241,11 @@ console.log('Far miss:', isHitboxCollision(player, miss));
 **Project Evidence Required:** Instantiate game objects in GameLevel configuration.  
 **Assessment Method:** Code review of GameLevel setup objects.
 
-**Instantiation** means calling `new ClassName()` to create an independent object from a class blueprint. Each object owns its own copy of the class's properties — changing one coin's position doesn't affect any other. The engine does this inside `GameLevel.js` by reading `this.classes` from the level and calling `new` on each entry.
+- **Instantiation** means calling the `class` to create an independent `object` from a class blueprint. 
+- Each object owns its own copy of the class's properties — changing one coin's position doesn't affect any other. 
+- The engine does this inside `GameLevel.js` by reading `this.classes` from the level and calling `new` on each entry.
+- Instantiation is the action of building the object
+
 
 ```js
 // From GameLevel.js — this is where the engine actually instantiates every game object
@@ -246,7 +259,13 @@ for (let descriptor of this.gameObjectClasses) {           // loop through every
 }
 ```
 
-- `new gameObjectClass.class(...)` is the exact line where Astro, Kirby, and every coin come to life — before this line they are just blueprints; after it they exist in the game and start running their own `update()` each frame.
+- `new gameObjectClass.class(...)` is the exact line where Astro, Kirby, and every coin come to life 
+- Before this line they are just blueprints 
+- After it they exist in the game and start running their own `update()` each frame.
+- The engine loops the blueprint classes in `for (let descriptor of this.gameObjectClasses)`
+- `if (!gameObjectClass.data) gameObjectClass.data = {}` ensures that if data is missing, it gives an empty package rather than crashing the whole game
+- ` let gameObject = new gameObjectClass.class(gameObjectClass.data, this.gameEnv)` is the actual instantiation 
+- Takes from a game object class and feeds it data -> `new` gives it action
 
 ```js
 // From GameLevelBasketball.js — the level's class manifest that GameLevel.js reads
@@ -264,7 +283,8 @@ this.classes = [
 ];
 ```
 
-- The same `Coin` class appears three times with different `data` objects — each `new Coin(...)` call produces a completely separate coin at a different position, proving that one blueprint can make many independent objects.
+- The same `Coin` class appears three times with different `data` objects
+- each `new Coin(...)` call produces a completely separate coin at a different position
 
 ---
 
@@ -293,6 +313,7 @@ class Character extends GameObject {          // Character is a GameObject that 
 ```
 
 - `Character` is the shared middle layer — it's the reason both Astro and Kirby can draw themselves on screen without each needing their own canvas and image-loading code.
+- Character is a GameObject -> character is a child class
 
 ```js
 // From Player.js — leaf of the chain
@@ -344,6 +365,9 @@ update() {
 ```
 
 - `super.update()` preserves the sprite animation so Astro keeps walking — then the gravity block adds falling on top. Without `super.update()`, the character would fall but the animation would freeze.
+- `super.update` tells the computer to run the parent class and its instructions first, and then once finished, allows the child class to adopt its own unique rules
+- Super.update allows implementation of gravity
+- This example shows how player.js inherits its own velocity
 
 ```js
 // From Player.js — Player completely overrides handleCollisionReaction()
@@ -364,6 +388,9 @@ handleCollisionReaction(other) {
 ```
 
 - This override is what stops Astro from sliding through barriers — it zeros out velocity along whichever axis is blocked before passing control back to the parent.
+- Without super, it would inherit player.js natural collision detection but wouldn't tell it to stop
+- Super allows the child class to act its own custom traits while letting the parent class handle the traits that remain untouched
+- In this case, the parent handles movement while the child class handles gravity
 
 ```js
 // From GameLevelBasketball.js — the level overrides randomizePosition on each coin at runtime
@@ -386,7 +413,9 @@ coin.randomizePosition = () => {
 **Project Evidence Required:** Use `super()` to chain constructors.  
 **Assessment Method:** Code review of `super(data, gameEnv)` calls.
 
-`super()` inside a constructor calls the parent class's constructor, passing along any arguments it needs. JavaScript requires `super()` before you can use `this` in a child constructor — without it the engine throws a `ReferenceError`. Every level of the hierarchy initializes itself in order before the child adds its own properties.
+`super()` inside a constructor calls the parent class's constructor, passing along any arguments it needs.
+- JavaScript requires `super()` before you can use `this` in a child constructor — without it the engine throws a `ReferenceError`. 
+- Every level of the hierarchy initializes itself in order before the child adds its own properties.
 
 ```js
 // Chain visualized top to bottom: Player → Character → GameObject
@@ -415,6 +444,7 @@ class Character extends GameObject {
 ```
 
 - The chain runs in this order every time: `GameObject` finishes first (engine registration), then `Character` (canvas + physics), then `Player` (keyboard). Each level waits for the level above it to finish before it can use `this`.
+- The `super()` command is calls a parent constructor that tells the computer to build the parent builder function first before the following child functions
 
 ```js
 // From GameLevelBasketball.js — the data object that travels through every level of the chain
@@ -429,6 +459,7 @@ const sprite_data_player = {
 ```
 
 - One plain object, defined in `GameLevelBasketball`, carries all the configuration that every level of the constructor chain needs — each level just reads the keys it cares about and ignores the rest.
+- This is an example of a Game Object that other classes pull from to build a player
 
 ```js
 // Npc uses the same chain pattern
@@ -444,6 +475,10 @@ class Npc extends Character {
 ```
 
 - Both `Player` and `Npc` follow the identical chaining pattern — `super(data, gameEnv)` is always the first line, before a single `this.` property is set.
+- Every object needs data and gameEnv that is passed to super() to carry down
+- This. executes the code inside constructors and attach unique properties
+- Super() gives the instructions in a `constructor` to conduct the build of a child alongside the parent constraints
+- Super. on the other hand allows parent class actions to run alongside child actions
 
 ---
 
@@ -465,7 +500,8 @@ if (this.isHitboxCollision(player, lebron)) { // true = the two hitbox rectangle
 }
 ```
 
-- This `if` block is the game's main consequence — the single check that turns a near-miss into a game-over and triggers score saving, the on-screen message, and the countdown to reset.
+- This `if` block is the game's main function
+- Checks a collision into a game-over and triggers score saving, the on-screen message, and the countdown to reset.
 
 ```js
 if (this.caught) {                                      // are we in the "just got caught" state?
@@ -486,7 +522,8 @@ if (this.caught) {                                      // are we in the "just g
 **Project Evidence Required:** Complex game logic combining multiple conditions.  
 **Assessment Method:** Code review of multi-level conditionals.
 
-**Nested conditions** layer multiple independent checks — the outer test must pass before the inner test even runs. Each level enforces a real game rule: is the game active, is the projectile in bounds, is it actually hitting LeBron.
+**Nested conditions** layer multiple independent checks or if checks
+- The outer test must pass before the inner test even runs. - Each level enforces a real game rule: is the game active, is the projectile in bounds, is it actually hitting LeBron.
 
 ```js
 // Level 1: skip all projectile logic while the game is locked or the round is over
@@ -511,9 +548,9 @@ if (!this.preGameLocked && !this.caught) {                    // game must be ac
 }
 ```
 
-- Level 1 prevents any projectile logic from running during the intro screen or after being caught — no wasted work when nothing can happen.
-- Level 2 cleans up expired or out-of-bounds shots before they ever reach the collision check — saves time and keeps the array clean.
-- Level 3 is where `isCircleHittingObject` is called — this is the exact moment the basketball sprite's position is checked against Kirby's hitbox rectangle (again: no sprites involved, just numbers).
+- Level 1 prevents any projectile logic from running during the intro screen or after being caught
+- Level 2 cleans up expired or out-of-bounds shots before they ever reach the collision check
+- Level 3 is where `isCircleHittingObject` is called —> this is the exact moment the basketball sprite's position is checked against Kirby's hitbox rectangle (again: no sprites involved, just numbers).
 
 ```js
 if (now < this.lebronStunUntil) { // is the stun timer still counting down?
@@ -523,7 +560,8 @@ if (now < this.lebronStunUntil) { // is the stun timer still counting down?
 }
 ```
 
-- A separate guard inside `update()` — this is what actually makes Kirby stand still for 3 seconds after being hit. Without this check, the stun timer would be set but Kirby would keep chasing anyway.
+- A separate guard inside `update()` — this is what actually makes Kirby stand still for 3 seconds after being hit. 
+- Without this check, the stun timer would be set but Kirby would keep chasing anyway.
 
 ---
 
@@ -546,7 +584,8 @@ this.lebronStunDurationMs = 3000;    // Kirby freezes for 3 seconds after being 
 this.targetSurvivalSeconds = 20;     // survive this many seconds to complete the level
 ```
 
-- `lastShotAt = -Infinity` is a clever trick — any real timestamp minus negative infinity is always a huge positive number, which is always greater than the 5-second cooldown, so the first shot is never blocked.
+- `lastShotAt = -Infinity` is where any real timestamp minus negative infinity is always a huge positive number, which is always greater than the 5-second cooldown, so the first shot is never blocked.
+- Allows the player to immediately be able to shoot the ball upon spawning
 
 ```js
 const speed = Math.min(2.1 + this.currentTime * 0.03, 2.8); // Kirby starts at 2.1 px/frame, slowly climbs to max 2.8
@@ -600,7 +639,7 @@ this.completionTriggered = false;       // prevents completeLevel() from firing 
 this.firstStealScrollTriggered = false; // ensures the "concept focus" event fires only on the first catch
 ```
 
-- Six flags cover every major event in the round — each one acts as a one-way switch that trips once and stays tripped until `resetRound()` resets them all to `false`.
+- Six flags cover every major event in the round — each one acts as a one-way switch that stops once and stays paused until `resetRound()` resets them all to `false`.
 
 ```js
 if (this.preGameLocked) return; // stop here — the Start button hasn't been clicked yet
@@ -616,7 +655,8 @@ if (this.preGameLocked) return; // stop here — the Start button hasn't been cl
 **Project Evidence Required:** Game object collections, level data.  
 **Assessment Method:** Code review of array operations.
 
-An **array** is an ordered list that can hold any number of values. The game stores every live projectile in an array that grows via `push()` as shots are fired and shrinks via `splice()` as they expire — the loop never needs to know how many there are in advance.
+An **array** is an ordered list that can hold any number of values. 
+- The game stores every live projectile in an array that grows via `push()` as shots are fired via `E` and shrinks via `splice()` as they expire — the loop never needs to know how many there are in advance.
 
 ```js
 this.projectiles = [];                   // starts empty — no shots fired yet
@@ -627,6 +667,9 @@ this.projectiles.splice(index, 1);       // removes one shot at 'index' when it 
 ```
 
 - The backwards `for` loop in `updateProjectiles` (`i = length - 1; i >= 0; i -= 1`) is specifically because `splice` shifts every element after the removed one — iterating backwards means earlier indices are never skipped.
+- The empty array shows there are zero basketballs
+- Every time E is pressed, `.push` tells the system to fit in another basketball
+- When a basketball is released, `.splice` tells the computer to kick out another ball
 
 ```js
 this.classes = [
@@ -651,6 +694,7 @@ this.classes = [
 **Assessment Method:** Code review of object literals.
 
 An **object literal** `{ key: value }` groups related values under one name. JSON uses the same syntax — objects in code and API responses have identical structure and access patterns.
+- Objects pack data together with labels
 
 ```js
 const sprite_data_player = {
@@ -742,7 +786,8 @@ const score = Math.round((this.currentTime * 10) + (this.getCoinsCollected() * 5
 **Project Evidence Required:** Path concatenation, text display.  
 **Assessment Method:** Code review of template literals and concatenation.
 
-**Template literals** (backtick strings with `${}`) replace concatenation for building display strings. They embed any live JavaScript expression inline, so the HUD updates in one readable line instead of several joined strings.
+**Template literals** (backtick strings with `${}`) replace concatenation for building display strings. 
+- Eembed any live JavaScript expression inline, so the HUD updates in one readable line instead of several joined strings.
 
 ```js
 this.timeHud.textContent =
@@ -751,6 +796,7 @@ this.timeHud.textContent =
 ```
 
 - `.toFixed(1)` formats the float (e.g., `7.3472`) down to one decimal place (e.g., `7.3`) so the HUD stays narrow and readable. This runs every frame so the timer is always live.
+- Template literals allow time to constantly update after every frame
 
 ```js
 const basePath = (this.gameEnv?.path || '').replace(/\/$/, ''); // strip trailing slash if present
@@ -758,6 +804,7 @@ const aquaticUrl = `${basePath}/games/aquatic.html`;            // build the ful
 ```
 
 - `replace(/\/$/, '')` uses a regex to clean the path before the template literal appends the route — without it you'd get double slashes like `/games//aquatic.html`.
+- It allows the path and the link to be clean throug the template literal
 
 ---
 
@@ -767,7 +814,8 @@ const aquaticUrl = `${basePath}/games/aquatic.html`;            // build the ful
 **Project Evidence Required:** Compound conditions in game logic.  
 **Assessment Method:** Code review of `&&`, `||`, `!`.
 
-**Boolean operators**: `||` (OR) is true if either side is true; `&&` (AND) requires both sides. Short-circuit evaluation means `||` stops as soon as it finds a truthy value — used here as a safe default to avoid null errors.
+**Boolean operators**: `||` (OR) is true if either side is true; `&&` (AND) requires both sides. 
+- Short-circuit evaluation means `||` stops as soon as it finds a truthy value — used here as a safe default to avoid null errors.
 
 ```js
 if (event.key.toLowerCase() !== 'e' || event.repeat) return; // block if wrong key OR key is being held down
