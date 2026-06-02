@@ -78,17 +78,17 @@ A **class** is a blueprint for creating objects — it defines their properties 
 // From Player.js — first custom character class
 class Player extends Character {
   constructor(data = null, gameEnv = null) {
-    super(data, gameEnv);
-    this.id = data?.id ? data.id.toLowerCase() : `player${Player.playerCount}`;
-    this.keypress = data?.keypress || { up: 87, left: 65, down: 83, right: 68 };
-    this.pressedKeys = {};
-    this._boundHandleKeyDown = this.handleKeyDown.bind(this);
-    this._boundHandleKeyUp = this.handleKeyUp.bind(this);
-    this.bindMovementKeyListners();
-    this.gravity = data.GRAVITY || false;
-    this.acceleration = 0.001;
-    this.time = 0;
-    this.moved = false;
+    super(data, gameEnv); // parent setup
+    this.id = data?.id ? data.id.toLowerCase() : `player${Player.playerCount}`; // id tag
+    this.keypress = data?.keypress || { up: 87, left: 65, down: 83, right: 68 }; // WASD
+    this.pressedKeys = {}; // key state
+    this._boundHandleKeyDown = this.handleKeyDown.bind(this); // keep this
+    this._boundHandleKeyUp = this.handleKeyUp.bind(this); // keep this
+    this.bindMovementKeyListners(); // listen keys
+    this.gravity = data.GRAVITY || false; // gravity flag
+    this.acceleration = 0.001; // fall speed
+    this.time = 0; // timer
+    this.moved = false; // moved flag
   }
 }
 ```
@@ -138,24 +138,25 @@ A **method** is a function that belongs to a class; it uses `this` to access the
 
 ```js
 isCircleHittingObject(projectile, obj) {
-  const rect = this.getHitboxRect(obj);
-  const nearestX = Math.max(rect.left, Math.min(projectile.x, rect.right));
-  const nearestY = Math.max(rect.top,  Math.min(projectile.y, rect.bottom));
-  const dx = projectile.x - nearestX;
-  const dy = projectile.y - nearestY;
-  return (dx * dx + dy * dy) <= (projectile.radius * projectile.radius);
+  const rect = this.getHitboxRect(obj); // target bounds
+  const nearestX = Math.max(rect.left, Math.min(projectile.x, rect.right)); // clamp x
+  const nearestY = Math.max(rect.top,  Math.min(projectile.y, rect.bottom)); // clamp y
+  const dx = projectile.x - nearestX; // x gap
+  const dy = projectile.y - nearestY; // y gap
+  return (dx * dx + dy * dy) <= (projectile.radius * projectile.radius); // hit?
 }
 ```
 
 - Takes two parameters: the `projectile` (a circle) and the target `obj` (a rectangle)
 - Finds the nearest point on the rectangle to the circle's center, then checks if the distance falls within the projectile's radius — if it does, that's a hit
+- This is the exact check that decides whether a basketball actually hits LeBron's hitbox
 
 ```js
 updateProjectiles(now, lebron) {
   for (let i = this.projectiles.length - 1; i >= 0; i -= 1) {
-    const projectile = this.projectiles[i];
-    projectile.x += projectile.vx;
-    projectile.y += projectile.vy;
+    const projectile = this.projectiles[i]; // current shot
+    projectile.x += projectile.vx; // move x
+    projectile.y += projectile.vy; // move y
     ...
   }
 }
@@ -163,14 +164,15 @@ updateProjectiles(now, lebron) {
 
 - Takes the current timestamp `now` and the `lebron` game object as parameters
 - Uses `now` to expire old projectiles based on their age, and checks `lebron` for hit detection each frame
+- This keeps every shot moving, removes old shots, and freezes LeBron when a shot connects
 
 ```js
 drawProjectileSprite(ctx, width, height) {
-  const cx = width / 2;
-  const cy = height / 2;
-  const r = Math.min(width, height) * 0.42;
-  ctx.beginPath();
-  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  const cx = width / 2; // center x
+  const cy = height / 2; // center y
+  const r = Math.min(width, height) * 0.42; // ball size
+  ctx.beginPath(); // start circle
+  ctx.arc(cx, cy, r, 0, Math.PI * 2); // draw ball
   ctx.fillStyle = '#f68b1f';
   ctx.fill();
 }
@@ -178,6 +180,7 @@ drawProjectileSprite(ctx, width, height) {
 
 - Takes three parameters: the canvas context `ctx`, and the `width` and `height` of the drawing area
 - Uses all three to calculate the center point and radius before drawing the basketball sprite onto its own canvas element
+- This is what makes each projectile look like a basketball instead of a plain dot
 
 **Text Runner: AABB Hit Box Check**
 
@@ -500,7 +503,7 @@ if (this.caught) {
 // Level 1: skip all projectile logic while the game is locked or the round is over
 if (!this.preGameLocked && !this.caught) {
   for (let i = this.projectiles.length - 1; i >= 0; i -= 1) {
-    const projectile = this.projectiles[i];
+    const projectile = this.projectiles[i]; // current shot
 
     // Level 2: is the projectile still alive and in bounds?
     if (this.isProjectileOutOfBounds(projectile) || now - projectile.bornAt > this.projectileLifeMs) {
@@ -510,10 +513,10 @@ if (!this.preGameLocked && !this.caught) {
 
     // Level 3: is it hitting LeBron specifically?
     if (lebron && this.isCircleHittingObject(projectile, lebron)) {
-      this.lebronStunUntil = Math.max(this.lebronStunUntil, now + this.lebronStunDurationMs);
-      lebron.velocity.x = 0;
-      lebron.velocity.y = 0;
-      this.removeProjectileAt(i);
+      this.lebronStunUntil = Math.max(this.lebronStunUntil, now + this.lebronStunDurationMs); // set stun
+      lebron.velocity.x = 0; // stop x
+      lebron.velocity.y = 0; // stop y
+      this.removeProjectileAt(i); // clear shot
     }
   }
 }
@@ -522,16 +525,18 @@ if (!this.preGameLocked && !this.caught) {
 - Level 1 gates the entire projectile system behind the game state flags — no projectile logic runs until the intro is dismissed and the round is active
 - Level 2 checks bounds and lifetime before doing anything else — expired or off-screen projectiles are removed immediately without checking collision
 - Level 3 only runs when a live, in-bounds projectile is also overlapping LeBron's hitbox — all three conditions must pass in sequence
+- This is the projectile-to-sprite hit check, so it answers the "does the ball actually touch LeBron?" question
 
 ```js
 if (now < this.lebronStunUntil) {
-  lebron.velocity.x = 0;
-  lebron.velocity.y = 0;
-  return;
+  lebron.velocity.x = 0; // hold still
+  lebron.velocity.y = 0; // hold still
+  return; // skip chase
 }
 ```
 
 - A separate nested guard inside `update()` — only reached after `preGameLocked` and `caught` checks both pass, then halts LeBron's chase logic for the full stun duration
+- This is what makes the basketball stun work by pausing LeBron for a few seconds
 
 ---
 
@@ -556,6 +561,7 @@ this.targetSurvivalSeconds = 20;
 
 - Numeric constants control all physics-adjacent values: how fast projectiles travel, how long they live, cooldown windows, and the win condition timer
 - `lastShotAt = -Infinity` ensures the first shot is always allowed — any real timestamp subtracted from negative infinity will be greater than the cooldown
+- These numbers tune the difficulty and pacing of the whole basketball round
 
 ```js
 const speed = Math.min(2.1 + this.currentTime * 0.03, 2.8);
@@ -581,6 +587,7 @@ const sprite_src_chaser = getKirbyImageUrl('kirby.png');
 ```
 
 - String filenames are passed to `getKirbyImageUrl()` to build full asset paths for each sprite — the function returns a complete URL string that the engine uses to load the image
+- These strings point the game at the exact character art it needs to render
 
 ```js
 const coins = this.gameEnv.gameObjects.filter(
@@ -610,6 +617,7 @@ this.firstStealScrollTriggered = false;
 ```
 
 - Six boolean flags gate every major state in the level: whether the intro has been dismissed, whether the player was caught, whether the score was already saved, and whether the completion event already fired
+- These true/false switches stop the same event from firing twice and keep the round state clean
 
 ```js
 if (this.preGameLocked) return;
@@ -636,6 +644,7 @@ this.projectiles.splice(index, 1);
 ```
 
 - `this.projectiles` is a live array of active basketball projectiles; objects are pushed in when fired and spliced out when they expire or hit LeBron
+- The array lets the game track every shot without needing one variable per projectile
 
 ```js
 this.classes = [
@@ -703,6 +712,7 @@ lebron.position.y += (dy / dist) * speed;
 ```
 
 - Subtraction finds the direction vector from LeBron to the player, `Math.hypot` computes the distance, division normalizes the vector to length 1, multiplication scales it by speed, and addition moves the position each frame
+- This math is what makes LeBron chase the player smoothly instead of teleporting
 
 **Text Runner: Vector Chase Math**
 
@@ -784,12 +794,14 @@ if (this.preGameLocked || this.caught) return;
 ```
 
 - `||` chains early-exit guards: the shot is blocked if the key is wrong, if it's a held repeat keydown, if the game hasn't started, or if the player is already caught — any one of these alone is enough to block the shot
+- These checks protect the input so one key press only creates one clean shot
 
 ```js
 return (dx * dx + dy * dy) <= (projectile.radius * projectile.radius);
 ```
 
 - A boolean expression used directly as the return value of `isCircleHittingObject` — true only when the squared distance between circle center and nearest rectangle point falls within the squared radius, avoiding a slow `Math.sqrt` call
+- This returns a simple yes/no answer for whether the basketball hit the target
 
 ---
 
@@ -871,6 +883,7 @@ drawProjectileSprite(ctx, width, height) {
 
 - `arc()` draws the main orange ball body; `quadraticCurveTo()` draws curved seam lines by bending a path between two points through a control point
 - Each projectile canvas is positioned absolutely in the DOM and updated every frame through its `style.left` and `style.top` properties
+- This is the visual piece that makes the shot look like a basketball moving across the court
 
 ---
 
@@ -1298,6 +1311,7 @@ if (lebron && this.isCircleHittingObject(projectile, lebron)) {
 - Level completion triggers after surviving 20 seconds — `completeLevel()` fires a custom event and halts the loop
 - Character interaction is tested through the catch collision between the player and LeBron each frame
 - Projectile stun is tested by shooting `E` at LeBron and verifying he freezes for 3 seconds
+- These are the main gameplay checks a teacher can point to when asking how the round actually works
 
 ---
 
@@ -1323,6 +1337,7 @@ submitRoundScore() {
 
 - POST: getting caught triggers `submitRoundScore()`; the Network tab in DevTools should show a successful request with the correct JSON body containing username, score, and game name
 - Error path: with the server stopped, `submitScore()` falls into `.catch()` and logs a warning instead of crashing the game
+- This is the code that saves the round score to the leaderboard backend
 
 ---
 
@@ -1351,6 +1366,7 @@ this.leaderboard.submitScore(username, score, 'Basketball')
 
 - Both `try/catch` and `.catch()` are present — `try/catch` handles synchronous event dispatch failures and `.catch()` handles async Promise rejections from the leaderboard API
 - Failures are logged as warnings so the game loop continues unaffected even when the API or event system is unavailable
+- The game stays playable even if the backend or custom event system fails
 
 ---
 
