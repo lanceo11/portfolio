@@ -9,6 +9,160 @@ toc_history: true
 codemirror: true
 ---
 
+<style>
+  .annotated-page {
+    position: relative;
+    isolation: isolate;
+    padding: 0.5rem 0 2rem;
+    --parallax-x: 0px;
+    --parallax-y: 0px;
+    --parallax-scroll: 0px;
+  }
+
+  .annotated-page::before,
+  .annotated-page::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: -1;
+    transition: transform 120ms linear;
+    will-change: transform;
+  }
+
+  .annotated-page::before {
+    background:
+      radial-gradient(circle at 15% 18%, rgba(246, 139, 31, 0.12), transparent 24%),
+      radial-gradient(circle at 85% 10%, rgba(255, 255, 255, 0.08), transparent 18%),
+      radial-gradient(circle at 75% 78%, rgba(0, 0, 0, 0.07), transparent 22%);
+    transform: translate3d(calc(var(--parallax-x) * 0.35), calc(var(--parallax-y) * 0.35 + var(--parallax-scroll) * 0.08), 0);
+  }
+
+  .annotated-page::after {
+    background:
+      linear-gradient(180deg, rgba(8, 14, 24, 0.03), rgba(8, 14, 24, 0) 28%),
+      repeating-linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.018) 0,
+        rgba(255, 255, 255, 0.018) 2px,
+        transparent 2px,
+        transparent 14px
+      );
+    transform: translate3d(calc(var(--parallax-x) * -0.18), calc(var(--parallax-y) * -0.18 + var(--parallax-scroll) * -0.04), 0);
+    opacity: 0.6;
+  }
+
+  .annotated-page .page-toc {
+    margin: 1rem 0 2rem;
+    padding: 1rem 1.1rem;
+    border: 1px solid rgba(120, 130, 150, 0.35);
+    border-radius: 16px;
+    background: linear-gradient(180deg, rgba(15, 19, 28, 0.88), rgba(18, 24, 34, 0.78));
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.16);
+    backdrop-filter: blur(10px);
+  }
+
+  .annotated-page .page-toc::before {
+    content: "Table of Contents";
+    display: block;
+    margin-bottom: 0.85rem;
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.75);
+  }
+
+  .annotated-page .page-toc,
+  .annotated-page .page-toc a {
+    color: inherit;
+  }
+
+  .annotated-page .page-toc ul {
+    margin: 0;
+    padding-left: 1rem;
+  }
+
+  .annotated-page .page-toc li {
+    margin: 0.35rem 0;
+    padding: 0.15rem 0;
+  }
+
+  .annotated-page .page-toc__link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.35rem 0.7rem;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.04);
+    text-decoration: none;
+    transition: transform 140ms ease, background-color 140ms ease, border-color 140ms ease;
+  }
+
+  .annotated-page .page-toc__link:hover {
+    transform: translateY(-1px);
+    background: rgba(246, 139, 31, 0.14);
+    border-color: rgba(246, 139, 31, 0.35);
+  }
+
+  .annotated-page h2,
+  .annotated-page h3,
+  .annotated-page h4 {
+    margin-top: 1.8rem;
+    margin-bottom: 0.8rem;
+    padding: 0.75rem 0.95rem;
+    border: 1px solid rgba(120, 130, 150, 0.28);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.05);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+  }
+
+  .annotated-page p,
+  .annotated-page ul,
+  .annotated-page ol,
+  .annotated-page blockquote,
+  .annotated-page table,
+  .annotated-page pre,
+  .annotated-page details {
+    margin-top: 0.85rem;
+    margin-bottom: 0.85rem;
+    padding: 0.95rem 1rem;
+    border: 1px solid rgba(120, 130, 150, 0.22);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.035);
+  }
+
+  .annotated-page pre {
+    overflow-x: auto;
+  }
+
+  .annotated-page code {
+    border-radius: 0.4rem;
+    padding: 0.1rem 0.3rem;
+    background: rgba(246, 139, 31, 0.12);
+  }
+
+  .annotated-page pre code {
+    padding: 0;
+    background: transparent;
+  }
+
+  .annotated-page img,
+  .annotated-page iframe {
+    max-width: 100%;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .annotated-page::before,
+    .annotated-page::after {
+      transform: none !important;
+    }
+  }
+</style>
+
+<div class="annotated-page" markdown="1">
+
 **Designated GameRunner**
 
 {% capture basketball_runner_challenge %}
@@ -139,6 +293,7 @@ class Npc extends Character {                                         // Npc is 
 
 A **method** is a function that belongs to a class; it uses `this` to access the instance's own data. **Parameters** are the named inputs declared in parentheses — they let one method body handle many different callers without duplicating code.
 - Parameters are what is required for methods to work
+- `Methods` are the actions objects take 
 
 ```js
 isCircleHittingObject(projectile, obj) {              // checks if a flying ball has hit a rectangular target
@@ -151,10 +306,10 @@ isCircleHittingObject(projectile, obj) {              // checks if a flying ball
 }
 ```
 
-- **This method has nothing to do with the sprite image** — it works entirely with invisible numbers (positions and a radius). The sprite is just the orange circle drawn on screen; this method is the math that decides whether that circle's center is close enough to Kirby's hitbox rectangle to count as a hit. You could delete the sprite entirely and the collision would still work.
 - This is the method that makes shooting Kirby feel accurate — if the ball's center lands within its own radius of Kirby's box, it registers as a stun.
 - Method checks if plyaer's basketball hits Kirby
 - If it hits Kirby, the method turns true and triggers the next action, which is freezing Kirby
+- **This method has nothing to do with the sprite image** — it works entirely with invisible numbers (positions and a radius). The sprite is just the orange circle drawn on screen; this method is the math that decides whether that circle's center is close enough to Kirby's hitbox rectangle to count as a hit. You could delete the sprite entirely and the collision would still work.
 
 ```js
 updateProjectiles(now, lebron) {                         // moves every flying ball and checks for hits each frame
@@ -264,7 +419,7 @@ for (let descriptor of this.gameObjectClasses) {           // loop through every
 - After it they exist in the game and start running their own `update()` each frame.
 - The engine loops the blueprint classes in `for (let descriptor of this.gameObjectClasses)`
 - `if (!gameObjectClass.data) gameObjectClass.data = {}` ensures that if data is missing, it gives an empty package rather than crashing the whole game
-- ` let gameObject = new gameObjectClass.class(gameObjectClass.data, this.gameEnv)` is the actual instantiation 
+- `let gameObject = new gameObjectClass.class(gameObjectClass.data, this.gameEnv)` is the actual instantiation 
 - Takes from a game object class and feeds it data -> `new` gives it action
 
 ```js
@@ -1410,3 +1565,36 @@ this.leaderboard.submitScore(username, score, 'Basketball') // async POST
 - Complete, playable level — LeBron chase AI, basketball projectile stun, coin collection, 20-second survival win condition, leaderboard score submission
 
 What makes the file especially strong is that every concept connects to something the player can actually see and test — the physics move LeBron, the booleans freeze the round, the canvas draws the basketball, and the API saves the score.
+
+</div>
+
+<script>
+  (() => {
+    const page = document.querySelector('.annotated-page');
+    if (!page || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    let ticking = false;
+    const update = () => {
+      const scrollY = window.scrollY || window.pageYOffset || 0;
+      page.style.setProperty('--parallax-scroll', `${scrollY}px`);
+      ticking = false;
+    };
+
+    const onPointerMove = (event) => {
+      const x = (event.clientX / window.innerWidth - 0.5) * 24;
+      const y = (event.clientY / window.innerHeight - 0.5) * 24;
+      page.style.setProperty('--parallax-x', `${x}px`);
+      page.style.setProperty('--parallax-y', `${y}px`);
+    };
+
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      window.requestAnimationFrame(update);
+    };
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('mousemove', onPointerMove, { passive: true });
+    update();
+  })();
+</script>
