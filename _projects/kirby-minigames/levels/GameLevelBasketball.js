@@ -10,12 +10,15 @@ import { getKirbyImageUrl } from './kirbyAssetPaths.js';
 
 class GameLevelBasketball {
   constructor(gameEnv) {
+    // Keep the engine reference so the level can query layout and objects.
     this.gameEnv = gameEnv;
     const width = gameEnv.innerWidth;
     const height = gameEnv.innerHeight;
+    // Scale spawn points with the viewport size.
     this.playerStart = { x: Math.round(width * 0.12), y: Math.round(height * 0.68) };
     this.chaserStart = { x: Math.round(width * 0.72), y: Math.round(height * 0.55) };
 
+    // Round flags start clean on every new instance.
     this.caught = false;
     this.caughtAt = 0; 
     this.roundResetDelayMs = 1400; 
@@ -45,6 +48,7 @@ class GameLevelBasketball {
     this.targetSurvivalSeconds = 20;
     this.firstStealScrollTriggered = false;
 
+    // Background art is loaded through the shared asset helper.
     const image_src_court = getKirbyImageUrl('BaskCourt.png');
     const image_data_court = {
       id: 'BasketballCourt',
@@ -52,6 +56,7 @@ class GameLevelBasketball {
       pixels: { height: 720, width: 1478 }
     };
 
+    // Player sprite data controls movement, hitbox, and animation.
     const sprite_src_player = getKirbyImageUrl('astro.png');
     const sprite_data_player = {
       id: 'BasketballPlayer',
@@ -75,6 +80,7 @@ class GameLevelBasketball {
       keypress: { up: 87, left: 65, down: 83, right: 68 }
     };
 
+    // LeBron uses a simpler config because the NPC mostly chases.
     const sprite_src_chaser = getKirbyImageUrl('kirby.png');
     const sprite_data_chaser = {
       id: 'LeBron',
@@ -103,11 +109,13 @@ class GameLevelBasketball {
       }
     };
 
+    // Coins use a small hitbox so pickups feel forgiving but not automatic.
     const coinHitbox = {
       widthPercentage: 0.15,
       heightPercentage: 0.15
     };
 
+    // Spread the coins around the court to create movement choices.
     const coin_1 = {
       id: 'coin_1',
       INIT_POSITION: { x: Math.round(width * 0.25), y: Math.round(height * 0.35) },
@@ -132,6 +140,7 @@ class GameLevelBasketball {
       value: 1
     };
 
+    // Invisible barriers keep the player inside the playable court.
     const barrier_bench_top = {
       id: 'barrier_bench_top',
       x: 0.07,
@@ -187,6 +196,7 @@ class GameLevelBasketball {
   }
 
   initialize() {
+    // Attach music once so replaying the level does not duplicate it.
     if (!this.levelMusic) {
       this.levelMusic = new KirbyLevelMusic({
         levelName: 'Basketball',
@@ -194,6 +204,7 @@ class GameLevelBasketball {
       }).attach();
     }
 
+    // Reset per-run stats before the level starts.
     if (!this.gameEnv.stats) this.gameEnv.stats = {};
     this.gameEnv.stats.coinsCollected = 0;
     this.updateCoinSpawnBounds();
@@ -209,13 +220,16 @@ class GameLevelBasketball {
   }
 
   update() {
+    // Chase logic only works once both characters exist.
     const player = this.findById('BasketballPlayer');
     const lebron = this.findById('LeBron');
     if (!player || !lebron) return;
     const now = performance.now();
+    // Projectiles keep moving even while the intro is locked.
     this.updateProjectiles(now, lebron);
     if (this.preGameLocked) return;
 
+    // The main win condition is surviving for the target time.
     if (!this.caught) {
       this.currentTime = (now - this.startTime) / 1000;
       this.updateHud();
@@ -226,6 +240,7 @@ class GameLevelBasketball {
       }
     }
 
+    // After a catch, pause briefly before resetting the round.
     if (this.caught) {
       if (now - this.caughtAt >= this.roundResetDelayMs) {
         this.resetRound();
@@ -233,28 +248,29 @@ class GameLevelBasketball {
       return;
     }
 
+    // A stun window gives the player a short breather.
     if (now < this.lebronStunUntil) {
       lebron.velocity.x = 0;
       lebron.velocity.y = 0;
       return;
     }
 
-    // Calculate the direction from LeBron to the player so LeBron can chase
+    // Aim LeBron directly at the player's current position.
     const dx = player.position.x - lebron.position.x;
     const dy = player.position.y - lebron.position.y;
     const dist = Math.hypot(dx, dy);
     if (dist < 1) return;
 
-    // Speed curve -> LeBron gets slightly faster over time but has a cap to keep the game fair
+    // LeBron speeds up slowly, but only up to a fair cap.
     const speed = Math.min(2.1 + this.currentTime * 0.03, 2.8);
     lebron.position.x += (dx / dist) * speed;
     lebron.position.y += (dy / dist) * speed;
 
-    // Clamp LeBron's position so he can't leave the visible game area
+    // Clamp movement so the chaser stays on screen.
     lebron.position.x = Math.max(0, Math.min(lebron.position.x, this.gameEnv.innerWidth - (lebron.width || 0)));
     lebron.position.y = Math.max(0, Math.min(lebron.position.y, this.gameEnv.innerHeight - (lebron.height || 0)));
 
-    // Update LeBron's facing direction based on which axis he's moving more along
+    // Pick the facing direction from the dominant movement axis.
     if (Math.abs(dx) > Math.abs(dy)) {
       lebron.direction = dx >= 0 ? 'right' : 'left';
     } else {
@@ -286,6 +302,7 @@ class GameLevelBasketball {
   }
 
   handleShootKey(event) {
+    // Only the E key fires, and only once per press.
     if (event.key.toLowerCase() !== 'e' || event.repeat) return;
     if (this.preGameLocked || this.caught) return;
     const now = performance.now();
@@ -299,10 +316,12 @@ class GameLevelBasketball {
   }
 
   spawnProjectileFromPlayer(player, now) {
+    // Projectiles are DOM canvases layered above the level.
     const container = this.gameEnv.container || this.gameEnv.gameContainer;
     if (!container) return;
 
     const directionVector = this.getFacingDirectionVector(player);
+    // Start each projectile at the player's center point.
     const projectile = {
       x: player.position.x + (player.width || 0) / 2,
       y: player.position.y + (player.height || 0) / 2,
@@ -313,6 +332,7 @@ class GameLevelBasketball {
       canvas: document.createElement('canvas')
     };
 
+    // Draw the sprite before inserting it into the DOM.
     projectile.canvas.width = 64;
     projectile.canvas.height = 64;
     const ctx = projectile.canvas.getContext('2d');
@@ -334,6 +354,7 @@ class GameLevelBasketball {
   }
 
   getFacingDirectionVector(player) {
+    // Map the player's facing state to a simple movement vector.
     const direction = String(player?.direction || 'down');
     const vectors = {
       up:        { x: 0,              y: -1             },
@@ -349,13 +370,14 @@ class GameLevelBasketball {
   }
 
   drawProjectileSprite(ctx, width, height) {
+    // The shot is rendered as a stylized basketball.
     const cx = width / 2;
     const cy = height / 2;
     const r = Math.min(width, height) * 0.42;
 
     ctx.clearRect(0, 0, width, height);
 
-    // Draws the main orange circle (the ball body)
+    // Fill the ball body first.
     ctx.beginPath();
     ctx.arc(cx, cy, r, 0, Math.PI * 2);
     ctx.fillStyle = '#f68b1f';
@@ -364,7 +386,7 @@ class GameLevelBasketball {
     ctx.strokeStyle = '#8a3d00';
     ctx.stroke();
 
-    // Draws the horizontal seam line
+    // Add the first seam curve.
     ctx.beginPath();
     ctx.moveTo(cx - r, cy);
     ctx.quadraticCurveTo(cx, cy - 8, cx + r, cy);
@@ -372,7 +394,7 @@ class GameLevelBasketball {
     ctx.lineWidth = 3;
     ctx.stroke();
 
-    // Draws the vertical seam line
+    // Add the second seam curve.
     ctx.beginPath();
     ctx.moveTo(cx, cy - r);
     ctx.quadraticCurveTo(cx - 8, cy, cx, cy + r);
@@ -380,19 +402,23 @@ class GameLevelBasketball {
   }
 
   updateProjectiles(now, lebron) {
+    // Walk backward so removals do not disturb later indexes.
     for (let i = this.projectiles.length - 1; i >= 0; i -= 1) {
       const projectile = this.projectiles[i];
       projectile.x += projectile.vx;
       projectile.y += projectile.vy;
 
+      // Remove projectiles once they expire or leave the arena.
       if (this.isProjectileOutOfBounds(projectile) || now - projectile.bornAt > this.projectileLifeMs) {
         this.removeProjectileAt(i);
         continue;
       }
 
+      // Keep the DOM node aligned with the simulated projectile.
       projectile.canvas.style.left = `${projectile.x - projectile.radius}px`;
       projectile.canvas.style.top = `${(this.gameEnv.top || 0) + projectile.y - projectile.radius}px`;
 
+      // A hit freezes LeBron briefly and consumes the shot.
       if (lebron && this.isCircleHittingObject(projectile, lebron)) {
         this.lebronStunUntil = Math.max(this.lebronStunUntil, now + this.lebronStunDurationMs);
         lebron.velocity.x = 0;
@@ -403,6 +429,7 @@ class GameLevelBasketball {
   }
 
   isProjectileOutOfBounds(projectile) {
+    // Give projectiles a small buffer before removing them.
     const margin = projectile.radius * 2;
     return (
       projectile.x < -margin ||
@@ -413,6 +440,7 @@ class GameLevelBasketball {
   }
 
   isCircleHittingObject(projectile, obj) {
+    // Check the closest point on the hitbox rectangle.
     const rect = this.getHitboxRect(obj);
     const nearestX = Math.max(rect.left, Math.min(projectile.x, rect.right));
     const nearestY = Math.max(rect.top,  Math.min(projectile.y, rect.bottom));
@@ -422,16 +450,19 @@ class GameLevelBasketball {
   }
 
   removeProjectileAt(index) {
+    // Clean up both DOM and array state together.
     const projectile = this.projectiles[index];
     if (projectile?.canvas) projectile.canvas.remove();
     this.projectiles.splice(index, 1);
   }
 
   findById(id) {
+    // Game objects are stored in the engine's object list.
     return this.gameEnv.gameObjects.find((obj) => obj?.spriteData?.id === id) || null;
   }
 
   getHitboxRect(obj) {
+    // Shrink the raw sprite bounds so collisions feel fairer.
     const width  = obj.width  || 0;
     const height = obj.height || 0;
     const pos = obj.position || { x: 0, y: 0 };
@@ -447,6 +478,7 @@ class GameLevelBasketball {
   }
 
   isHitboxCollision(a, b) {
+    // Standard rectangle overlap test on the adjusted hitboxes.
     const ar = this.getHitboxRect(a);
     const br = this.getHitboxRect(b);
     return (
@@ -458,6 +490,7 @@ class GameLevelBasketball {
   }
 
   createHud() {
+    // Rebuild the HUD so old nodes do not linger between rounds.
     const container = this.gameEnv.container || this.gameEnv.gameContainer;
     if (!container) return;
     const safeTop = Math.max(16, (this.gameEnv.top || 0) + 72);
@@ -467,6 +500,7 @@ class GameLevelBasketball {
     const oldMessage = container.querySelector('#basketball-message-hud');
     if (oldMessage) oldMessage.remove();
 
+    // Timer stays pinned near the top-left corner.
     this.timeHud = document.createElement('div');
     this.timeHud.id = 'basketball-time-hud';
     Object.assign(this.timeHud.style, {
@@ -487,6 +521,7 @@ class GameLevelBasketball {
     });
     container.appendChild(this.timeHud);
 
+    // Message HUD is centered for round-end feedback.
     this.messageHud = document.createElement('div');
     this.messageHud.id = 'basketball-message-hud';
     Object.assign(this.messageHud.style, {
@@ -510,9 +545,11 @@ class GameLevelBasketball {
   }
 
   createBottomNav() {
+    // Recreate the navigation strip each time the level initializes.
     const oldNav = document.getElementById('basketball-bottom-nav');
     if (oldNav) oldNav.remove();
 
+    // Links are built from the current app path so they work everywhere.
     const basePath = (this.gameEnv?.path || '').replace(/\/$/, '');
     const aquaticUrl = `${basePath}/games/aquatic.html`;
     const seekUrl    = `${basePath}/gamify/seek.html`;
@@ -566,8 +603,10 @@ class GameLevelBasketball {
   }
 
   completeLevel() {
+    // Guard against double-completing the same round.
     if (this.completionTriggered) return;
     this.completionTriggered = true;
+    // The completion state drives the final UI and score submission.
     this.levelCompleted = true;
 
     if (this.messageHud) {
@@ -592,6 +631,7 @@ class GameLevelBasketball {
   }
 
   showCaughtMessage() {
+    // Briefly explain why the round ended.
     if (!this.messageHud) return;
     this.messageHud.innerHTML = 'Kirby stole the ball!<br>Resetting round...';
     this.messageHud.style.display = 'block';
@@ -612,6 +652,7 @@ class GameLevelBasketball {
   }
 
   submitRoundScore() {
+    // Send the best score once per round to avoid duplicates.
     if (!this.leaderboard || this.scoreSubmittedThisRound) return;
     const score = Math.round((this.currentTime * 10) + (this.getCoinsCollected() * 50));
     const username = (this.gameEnv?.game?.uid && String(this.gameEnv.game.uid)) || 'Player';
@@ -627,6 +668,7 @@ class GameLevelBasketball {
   }
 
   resetRound() {
+    // Put every dynamic actor back at its starting point.
     const player = this.findById('BasketballPlayer');
     const lebron = this.findById('LeBron');
     const coins = this.gameEnv.gameObjects.filter((obj) => String(obj?.spriteData?.id || '').startsWith('coin_'));
@@ -647,6 +689,7 @@ class GameLevelBasketball {
       lebron.direction  = 'left';
     }
 
+    // Clear temporary projectiles and round-specific flags.
     coins.forEach((coin) => {
       if (typeof coin.randomizePosition === 'function') {
         coin.randomizePosition();
@@ -671,6 +714,7 @@ class GameLevelBasketball {
   }
 
   showIntroDialogue() {
+    // The intro dialogue locks the round until the player starts it.
     this.introDialogue = new DialogueSystem({
       dialogues: ['Foreign explorer? Try to survive as long as you can by keeping the Ball safe!'],
       id: 'basketball_boss_intro'
@@ -700,6 +744,7 @@ class GameLevelBasketball {
   }
 
   updateCoinSpawnBounds() {
+    // Coins should only spawn inside the playable lane.
     if (!this.gameEnv.stats) this.gameEnv.stats = {};
     this.gameEnv.stats.coinSpawnBounds = {
       xMin: this.gameEnv.innerWidth  * 0.10,
@@ -710,6 +755,7 @@ class GameLevelBasketball {
   }
 
   applyCoinSpawnRules() {
+    // Reposition coins after the engine has created the objects.
     const bounds = this.gameEnv?.stats?.coinSpawnBounds;
     if (!bounds) return;
     const coins = this.gameEnv.gameObjects.filter((obj) => String(obj?.spriteData?.id || '').startsWith('coin_'));
@@ -738,10 +784,12 @@ class GameLevelBasketball {
   }
 
   getCoinsCollected() {
+    // The engine stores this stat for the current run.
     return Number(this.gameEnv?.stats?.coinsCollected || 0);
   }
 
   loadBestTime() {
+    // Best time is stored locally so it survives reloads.
     try {
       return Number(localStorage.getItem('basketball_best_time') || 0);
     } catch (_) {
@@ -750,12 +798,14 @@ class GameLevelBasketball {
   }
 
   saveBestTime() {
+    // Persist only valid numbers.
     try {
       localStorage.setItem('basketball_best_time', String(this.bestTime));
     } catch (_) {}
   }
 
   loadBestCoins() {
+    // Coins use the same storage pattern as time.
     try {
       return Number(localStorage.getItem('basketball_best_coins') || 0);
     } catch (_) {
@@ -764,6 +814,7 @@ class GameLevelBasketball {
   }
 
   saveBestCoins() {
+    // Keep the best coin total in sync with local storage.
     try {
       localStorage.setItem('basketball_best_coins', String(this.bestCoins));
     } catch (_) {}

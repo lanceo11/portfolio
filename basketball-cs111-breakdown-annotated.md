@@ -816,13 +816,15 @@ const aquaticUrl = `${basePath}/games/aquatic.html`;            // build the ful
 
 **Boolean operators**: `||` (OR) is true if either side is true; `&&` (AND) requires both sides. 
 - Short-circuit evaluation means `||` stops as soon as it finds a truthy value — used here as a safe default to avoid null errors.
+- There's no in betweens, either true or false.
 
 ```js
 if (event.key.toLowerCase() !== 'e' || event.repeat) return; // block if wrong key OR key is being held down
 if (this.preGameLocked || this.caught) return;                 // block if intro is showing OR player is caught
 ```
 
-- Four separate reasons to cancel a shot, all checked in two lines — if any single one is true, the shot is blocked. Short-circuit means if the key isn't 'e', none of the other checks even run.
+- Four separate reasons to cancel a shot, all checked in two lines — if any single one is true, the shot is blocked. 
+- Short-circuit means if the key isn't 'e', none of the other checks even run. -> if E is held or Q is tapped, basketball won't send
 
 ```js
 return (dx * dx + dy * dy) <= (projectile.radius * projectile.radius); // true = ball is close enough to count as a hit
@@ -1008,6 +1010,7 @@ try {
 **Assessment Method:** Code review of `JSON.parse()`, object destructuring.
 
 **JSON** (JavaScript Object Notation) is the standard text format for API data. Its syntax is identical to JS object literals — the same dot notation accesses properties in both. `res.json()` parses the response body text into a plain JS object.
+- JSON parsing allows for saved data in memory to be converted into usable data to create live data
 
 ```js
 import Leaderboard from '@assets/js/GameEnginev1.1/essentials/Leaderboard.js'; // import the leaderboard helper class
